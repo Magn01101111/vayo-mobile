@@ -1,0 +1,7 @@
+{
+  "name": "vayo-mobile",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
