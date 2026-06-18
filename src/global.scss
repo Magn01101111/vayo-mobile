@@ -1,37 +1,271 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
-/* Core CSS required for Ionic components to work properly */
+// Core CSS required for Ionic components to work properly
 @import "@ionic/angular/css/core.css";
 
-/* Basic CSS for apps built with Ionic */
+// Basic CSS for apps built with Ionic
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
 
-/* Optional CSS utils that can be commented out */
+// Optional Ionic utilities
 @import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+// VAYO Design System — base global (mobile-first)
+*, *::before, *::after { box-sizing: border-box; }
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-base);
+  color: var(--ink);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+img { height: auto; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+p, h1, h2, h3, h4, h5, h6 { margin: 0; }
+
+// Tipografía base
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-snug);
+}
+
+h1 { font-size: var(--fs-h1); font-weight: var(--fw-black); letter-spacing: var(--ls-tight); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+h4 { font-size: var(--fs-h4); }
+
+p { color: var(--ink-2); }
+
+// Utilidades tipográficas
+.mono {
+  font-family: var(--font-mono);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+// Chip "Función propuesta" (igual que en web)
+.fp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  background: var(--amber-50);
+  color: var(--amber-700);
+  border: var(--bw) solid var(--amber-line);
+  border-radius: var(--r-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wide);
+  line-height: 1.6;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    flex-shrink: 0;
+  }
+}
+
+// Blueprint grid overlay (usado en hero/scanner)
+.blueprint-bg {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--blueprint-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--blueprint-line) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+// Accesibilidad — outline global para navegación por teclado
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+// Quitar outline en interacciones táctiles (donde :focus-visible no aplica)
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// Botones base
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--r);
+  border: var(--bw) solid transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+
+  &--primary {
+    background: var(--blue);
+    color: var(--paper);
+    &:active { background: var(--blue-700); }
+  }
+
+  &--amber {
+    background: var(--amber);
+    color: var(--accent-ink);
+    &:active { background: var(--amber-700); }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--blue);
+    border-color: var(--blue);
+    &:active { background: var(--blue-50); }
+  }
+
+  &--ghost-on-navy {
+    background: rgba(255,255,255,.08);
+    color: var(--text-on-navy);
+    border-color: var(--border-on-navy);
+    &:active { background: rgba(255,255,255,.16); }
+  }
+
+  &--sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-xs);
+  }
+
+  &--lg {
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--fs-body);
+  }
+
+  &--block {
+    width: 100%;
+  }
+
+  &:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+}
+
+// Estado vacío genérico
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+  color: var(--ink-3);
+
+  svg { opacity: .35; }
+
+  h3 { font-size: var(--fs-h3); color: var(--ink-2); }
+  p  { font-size: var(--fs-sm); }
+}
+
+// Spinner genérico
+.vayo-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--line);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: vayo-spin .7s linear infinite;
+}
+
+@keyframes vayo-spin {
+  to { transform: rotate(360deg); }
+}
+
+// Badge de estado
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: var(--r-pill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+
+  &--draft    { background: var(--state-draft-bg);    color: var(--state-draft-fg);    }
+  &--sent     { background: var(--state-sent-bg);     color: var(--state-sent-fg);     }
+  &--accepted { background: var(--state-accepted-bg); color: var(--state-accepted-fg); }
+  &--rejected { background: var(--state-rejected-bg); color: var(--state-rejected-fg); }
+  &--expired  { background: var(--state-expired-bg);  color: var(--state-expired-fg);  }
+}
+
+// Ionic overrides — quitar estilos por defecto que chocan con VAYO
+ion-content {
+  --background: var(--surface-page);
+}
+
+ion-toolbar {
+  --background: var(--navy-900);
+  --color: var(--text-on-navy);
+  --border-color: var(--navy-700);
+}
+
+ion-tab-bar {
+  --background: var(--navy-900);
+  --border: 1px solid var(--navy-700);
+}
+
+ion-tab-button {
+  --color: var(--navy-300);
+  --color-selected: var(--amber);
+}
+
+ion-searchbar {
+  --background: var(--paper);
+  --color: var(--ink);
+  --placeholder-color: var(--ink-3);
+  --icon-color: var(--ink-3);
+  --border-radius: var(--r);
+}
+
+ion-item {
+  --background: var(--paper);
+  --color: var(--ink);
+  --border-color: var(--line);
+}

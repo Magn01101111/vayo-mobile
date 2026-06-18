@@ -1,0 +1,24 @@
+ion-tab-bar {
+  --background: var(--navy-900);
+  --border: 1px solid var(--navy-700);
+  height: 56px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+ion-tab-button {
+  --color: var(--navy-300);
+  --color-selected: var(--amber);
+  --ripple-color: transparent;
+
+  ion-icon {
+    font-size: 22px;
+    margin-bottom: 2px;
+  }
+
+  ion-label {
+    font-family: var(--font-sans);
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-medium);
+    letter-spacing: var(--ls-wide);
+  }
+}

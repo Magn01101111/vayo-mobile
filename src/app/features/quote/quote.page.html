@@ -1,0 +1,248 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      Cotización
+      @if (qs.itemCount() > 0) {
+        <span class="title-badge mono">{{ qs.itemCount() }}</span>
+      }
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- ── Éxito: cotización enviada ──────────────────────────────────────── -->
+  @if (submitted()) {
+    <div class="success-state">
+      <div class="success-state__icon">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="var(--ok-bg)" stroke="var(--ok)" stroke-width="1.5"/>
+          <path d="M14 24l7 7 13-13" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>¡Cotización enviada!</h2>
+      <p>Te contactaremos pronto con disponibilidad y precios.</p>
+      @if (folio()) {
+        <div class="success-state__folio">
+          <span class="eyebrow">Folio</span>
+          <span class="mono">{{ folio() }}</span>
+        </div>
+      }
+      <div class="success-state__actions">
+        <button class="btn btn--amber btn--block" (click)="goToCatalog()">Ver catálogo</button>
+        <button class="btn btn--ghost btn--block" (click)="newQuote()">Nueva cotización</button>
+      </div>
+    </div>
+
+  <!-- ── Carrito vacío ───────────────────────────────────────────────────── -->
+  } @else if (qs.items().length === 0) {
+    <div class="empty-state">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" width="64" height="64" aria-hidden="true">
+        <rect x="8" y="4" width="32" height="40" rx="3" stroke="var(--ink-4)"/>
+        <path d="M16 14h16M16 20h16M16 26h10" stroke="var(--ink-4)" stroke-linecap="round"/>
+      </svg>
+      <h3>Tu cotización está vacía</h3>
+      <p>Agrega productos desde el catálogo.</p>
+      <button class="btn btn--amber" (click)="goToCatalog()">Ir al catálogo</button>
+    </div>
+
+  <!-- ── Cotización con ítems ────────────────────────────────────────────── -->
+  } @else {
+
+    <!-- Listado de ítems -->
+    <section class="q-section">
+      <h2 class="q-section__title">Productos ({{ qs.itemCount() }})</h2>
+
+      <ul class="q-items">
+        @for (item of qs.items(); track item.id) {
+          <li class="q-item">
+            <div class="q-item__media">
+              @if (item.imageUrl) {
+                <img [src]="item.imageUrl" [alt]="item.name" loading="lazy" />
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                  <path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z M3.3 7 12 12l8.7-5M12 22V12" stroke-linejoin="round"/>
+                </svg>
+              }
+            </div>
+
+            <div class="q-item__info">
+              <p class="mono q-item__sku">{{ item.sku }}</p>
+              <p class="q-item__name">{{ item.name }}</p>
+              <div class="q-item__price mono">
+                @if (item.offerPrice) {
+                  {{ item.offerPrice }}
+                } @else {
+                  {{ item.price }}
+                }
+              </div>
+            </div>
+
+            <div class="q-item__ctrl">
+              <div class="qty-ctrl">
+                <button class="qty-ctrl__btn" (click)="changeQty(item.id, -1)" aria-label="Reducir cantidad">
+                  <ion-icon name="remove-outline" />
+                </button>
+                <span class="qty-ctrl__n mono">{{ item.qty }}</span>
+                <button class="qty-ctrl__btn" (click)="changeQty(item.id, 1)" aria-label="Aumentar cantidad">
+                  <ion-icon name="add-outline" />
+                </button>
+              </div>
+              <button class="q-item__del" (click)="removeItem(item.id)" aria-label="Eliminar">
+                <ion-icon name="trash-outline" />
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- Cupón -->
+    <section class="q-section">
+      <h2 class="q-section__title">Cupón de descuento</h2>
+
+      @if (qs.coupon()) {
+        <div class="coupon-applied">
+          <div class="coupon-applied__info">
+            <ion-icon name="ticket-outline" />
+            <div>
+              <span class="mono coupon-applied__code">{{ qs.coupon()!.code }}</span>
+              <span class="coupon-applied__desc">{{ qs.coupon()!.description ?? 'Descuento aplicado' }}</span>
+            </div>
+          </div>
+          <button class="btn btn--ghost btn--sm" (click)="removeCoupon()">Quitar</button>
+        </div>
+      } @else {
+        <div class="coupon-row">
+          <ion-input
+            class="q-input"
+            placeholder="CÓDIGO"
+            [value]="couponCode()"
+            (ionInput)="couponCode.set($any($event.detail.value ?? ''))"
+            (keyup.enter)="applyCoupon()"
+          />
+          <button class="btn btn--ghost" (click)="applyCoupon()">Aplicar</button>
+        </div>
+        @if (couponError()) {
+          <p class="q-field-err">{{ couponError() }}</p>
+        }
+        @if (couponOk()) {
+          <p class="q-field-ok mono">Cupón aplicado correctamente.</p>
+        }
+      }
+    </section>
+
+    <!-- Totales -->
+    <section class="q-section">
+      <div class="q-totals">
+        <div class="q-totals__row">
+          <span>Subtotal</span>
+          <span class="mono">{{ formatCLP(qs.subtotal()) }}</span>
+        </div>
+        @if (qs.discount() > 0) {
+          <div class="q-totals__row q-totals__row--disc">
+            <span>Descuento</span>
+            <span class="mono">−{{ formatCLP(qs.discount()) }}</span>
+          </div>
+        }
+        <div class="q-totals__row q-totals__row--total">
+          <span>Total neto</span>
+          <span class="mono">{{ formatCLP(qs.total()) }}</span>
+        </div>
+        <p class="q-totals__note mono">Precios netos, sin IVA. Sujeto a disponibilidad y confirmación.</p>
+      </div>
+    </section>
+
+    <!-- Formulario cliente (guest-first) -->
+    <section class="q-section">
+      <h2 class="q-section__title">Tus datos</h2>
+      <p class="q-section__sub">Sin cuenta necesaria. Te responderemos por correo.</p>
+
+      <div class="q-form">
+        <div class="q-field" [class.q-field--err]="nameErr()">
+          <label class="q-label" for="q-name">Nombre *</label>
+          <ion-input
+            id="q-name"
+            class="q-input"
+            placeholder="Tu nombre completo"
+            [(ngModel)]="name"
+            type="text"
+            autocomplete="name"
+          />
+          @if (nameErr()) { <p class="q-field-err">{{ nameErr() }}</p> }
+        </div>
+
+        <div class="q-field" [class.q-field--err]="emailErr()">
+          <label class="q-label" for="q-email">Correo electrónico *</label>
+          <ion-input
+            id="q-email"
+            class="q-input"
+            placeholder="correo@empresa.cl"
+            [(ngModel)]="email"
+            type="email"
+            autocomplete="email"
+          />
+          @if (emailErr()) { <p class="q-field-err">{{ emailErr() }}</p> }
+        </div>
+
+        <div class="q-field">
+          <label class="q-label" for="q-phone">Teléfono</label>
+          <ion-input
+            id="q-phone"
+            class="q-input"
+            placeholder="+56 9 1234 5678"
+            [(ngModel)]="phone"
+            type="tel"
+            autocomplete="tel"
+          />
+        </div>
+
+        <div class="q-field">
+          <label class="q-label" for="q-company">Empresa</label>
+          <ion-input
+            id="q-company"
+            class="q-input"
+            placeholder="Nombre de tu empresa (opcional)"
+            [(ngModel)]="company"
+            type="text"
+            autocomplete="organization"
+          />
+        </div>
+
+        <div class="q-field">
+          <label class="q-label" for="q-notes">Observaciones</label>
+          <ion-textarea
+            id="q-notes"
+            class="q-input q-textarea"
+            placeholder="Urgencia, especificaciones adicionales…"
+            [(ngModel)]="notes"
+            [autoGrow]="true"
+            rows="3"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Botón enviar -->
+    <div class="q-submit">
+      @if (submitError()) {
+        <p class="q-field-err q-submit__err">{{ submitError() }}</p>
+      }
+      <button
+        class="btn btn--amber btn--block btn--lg"
+        [disabled]="qs.submitting()"
+        (click)="submit()"
+      >
+        @if (qs.submitting()) {
+          <ion-spinner name="crescent" class="btn-spinner" />
+          Enviando…
+        } @else {
+          Solicitar cotización
+        }
+      </button>
+      <p class="q-submit__note mono">Recibirás confirmación en tu correo.</p>
+    </div>
+
+  }
+
+</ion-content>

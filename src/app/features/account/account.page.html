@@ -1,0 +1,589 @@
+<ion-header>
+  <ion-toolbar>
+    @if (view() === 'login' || view() === 'register' || view() === 'forgot') {
+      <button slot="start" class="back-btn" (click)="goTo(view() === 'login' ? 'guest' : 'login')" aria-label="Volver">
+        <ion-icon name="arrow-back-outline" />
+      </button>
+    }
+    <ion-title>
+      @switch (view()) {
+        @case ('guest')       { Cuenta }
+        @case ('login')       { Iniciar sesión }
+        @case ('register')    { Crear cuenta }
+        @case ('forgot')      { Recuperar contraseña }
+        @case ('forgot-sent') { Revisa tu correo }
+        @case ('profile')     { Mi cuenta }
+      }
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- ══════════════════ MODO INVITADO ══════════════════ -->
+  @if (view() === 'guest') {
+    <div class="acc-guest">
+      <div class="acc-guest__icon">
+        <ion-icon name="person-circle-outline" />
+      </div>
+      <h2>Modo invitado</h2>
+      <p>Inicia sesión para ver tu historial de cotizaciones, tus compras y tus favoritos.</p>
+
+      <div class="acc-guest__actions">
+        <button class="btn btn--amber btn--block btn--lg" (click)="goTo('login')">
+          Iniciar sesión
+        </button>
+        <button class="btn btn--ghost btn--block" (click)="goTo('register')">
+          Crear cuenta
+        </button>
+      </div>
+
+      <button class="btn btn--text" (click)="goToCatalog()">
+        Navegar como invitado →
+      </button>
+    </div>
+
+  <!-- ══════════════════ LOGIN ══════════════════ -->
+  } @else if (view() === 'login') {
+    <div class="acc-form-wrap">
+      <div class="acc-form">
+        <div class="form-field">
+          <label class="form-label" for="l-email">Correo electrónico</label>
+          <input
+            id="l-email"
+            class="form-input"
+            type="email"
+            placeholder="correo@empresa.cl"
+            [(ngModel)]="loginEmail"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="l-pwd">Contraseña</label>
+          <input
+            id="l-pwd"
+            class="form-input"
+            type="password"
+            placeholder="Tu contraseña"
+            [(ngModel)]="loginPassword"
+            autocomplete="current-password"
+            (keyup.enter)="login()"
+          />
+        </div>
+
+        @if (loginError()) {
+          <p class="form-err">{{ loginError() }}</p>
+        }
+
+        <button
+          class="btn btn--amber btn--block btn--lg"
+          [disabled]="loginLoading()"
+          (click)="login()"
+        >
+          @if (loginLoading()) {
+            <ion-spinner name="crescent" class="btn-spinner" />
+            Iniciando…
+          } @else {
+            Iniciar sesión
+          }
+        </button>
+
+        <button class="btn btn--text" (click)="goTo('forgot')">
+          Olvidé mi contraseña
+        </button>
+
+        <p class="form-hint">
+          ¿No tienes cuenta?
+          <button class="inline-link" (click)="goTo('register')">Regístrate aquí</button>
+        </p>
+      </div>
+    </div>
+
+  <!-- ══════════════════ REGISTRO ══════════════════ -->
+  } @else if (view() === 'register') {
+    <div class="acc-form-wrap">
+      <div class="acc-form">
+        <div class="form-field">
+          <label class="form-label" for="r-name">Nombre completo *</label>
+          <input
+            id="r-name"
+            class="form-input"
+            type="text"
+            placeholder="Tu nombre"
+            [(ngModel)]="regName"
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="r-email">Correo electrónico *</label>
+          <input
+            id="r-email"
+            class="form-input"
+            type="email"
+            placeholder="correo@empresa.cl"
+            [(ngModel)]="regEmail"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="r-rut">RUT *</label>
+          <input
+            id="r-rut"
+            class="form-input"
+            type="text"
+            placeholder="12.345.678-9"
+            [(ngModel)]="regRut"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="r-phone">Teléfono</label>
+          <input
+            id="r-phone"
+            class="form-input"
+            type="tel"
+            placeholder="+56 9 1234 5678"
+            [(ngModel)]="regPhone"
+            autocomplete="tel"
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="r-pwd">Contraseña *</label>
+          <input
+            id="r-pwd"
+            class="form-input"
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+            [(ngModel)]="regPassword"
+            autocomplete="new-password"
+          />
+        </div>
+
+        @if (regError()) {
+          <p class="form-err">{{ regError() }}</p>
+        }
+
+        <button
+          class="btn btn--amber btn--block btn--lg"
+          [disabled]="regLoading()"
+          (click)="register()"
+        >
+          @if (regLoading()) {
+            <ion-spinner name="crescent" class="btn-spinner" />
+            Creando cuenta…
+          } @else {
+            Crear cuenta
+          }
+        </button>
+
+        <p class="form-hint">
+          ¿Ya tienes cuenta?
+          <button class="inline-link" (click)="goTo('login')">Inicia sesión</button>
+        </p>
+      </div>
+    </div>
+
+  <!-- ══════════════════ RECUPERAR CONTRASEÑA ══════════════════ -->
+  } @else if (view() === 'forgot') {
+    <div class="acc-form-wrap">
+      <div class="acc-form">
+        <p class="form-desc">Te enviaremos un enlace para restablecer tu contraseña.</p>
+
+        <div class="form-field">
+          <label class="form-label" for="f-email">Correo electrónico</label>
+          <input
+            id="f-email"
+            class="form-input"
+            type="email"
+            placeholder="correo@empresa.cl"
+            [(ngModel)]="forgotEmail"
+            autocomplete="email"
+            (keyup.enter)="sendForgot()"
+          />
+        </div>
+
+        @if (forgotError()) {
+          <p class="form-err">{{ forgotError() }}</p>
+        }
+
+        <button
+          class="btn btn--amber btn--block btn--lg"
+          [disabled]="forgotLoading()"
+          (click)="sendForgot()"
+        >
+          @if (forgotLoading()) {
+            <ion-spinner name="crescent" class="btn-spinner" />
+            Enviando…
+          } @else {
+            Enviar instrucciones
+          }
+        </button>
+      </div>
+    </div>
+
+  <!-- ══════════════════ CORREO ENVIADO ══════════════════ -->
+  } @else if (view() === 'forgot-sent') {
+    <div class="acc-sent">
+      <div class="acc-sent__icon">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="var(--ok-bg)" stroke="var(--ok)" stroke-width="1.5"/>
+          <path d="M14 24l7 7 13-13" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>Revisa tu correo</h2>
+      <p>Te enviamos las instrucciones a <strong>{{ forgotEmail }}</strong>.</p>
+      <button class="btn btn--ghost btn--block" (click)="goTo('login')">
+        Volver al inicio de sesión
+      </button>
+    </div>
+
+  <!-- ══════════════════ PERFIL (AUTENTICADO) ══════════════════ -->
+  } @else if (view() === 'profile') {
+
+    <!-- Cabecera del perfil -->
+    <div class="prof-header">
+      <div class="prof-header__avatar">
+        @if (auth.user()?.profileImage) {
+          <img [src]="auth.user()!.profileImage" [alt]="auth.user()!.name" />
+        } @else {
+          <span class="prof-header__initials mono">{{ initials() }}</span>
+        }
+        <label class="prof-header__cam" aria-label="Cambiar foto">
+          @if (photoUploading()) {
+            <ion-spinner name="crescent" style="width:16px;height:16px;--color:var(--accent-ink)" />
+          } @else {
+            <ion-icon name="camera-outline" />
+          }
+          <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onPhotoSelected($event)" />
+        </label>
+      </div>
+      <div class="prof-header__info">
+        <h2>{{ auth.user()?.name }}</h2>
+        <p class="mono">{{ auth.user()?.email }}</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="prof-tabs" role="tablist">
+      <button
+        class="prof-tab"
+        [class.prof-tab--on]="activeTab() === 'datos'"
+        (click)="setTab('datos')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'datos'"
+      >Mis datos</button>
+      <button
+        class="prof-tab"
+        [class.prof-tab--on]="activeTab() === 'cotizaciones'"
+        (click)="setTab('cotizaciones')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'cotizaciones'"
+      >Cotizaciones</button>
+      <button
+        class="prof-tab"
+        [class.prof-tab--on]="activeTab() === 'ventas'"
+        (click)="setTab('ventas')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'ventas'"
+      >Compras</button>
+      <button
+        class="prof-tab"
+        [class.prof-tab--on]="activeTab() === 'favoritos'"
+        (click)="setTab('favoritos')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'favoritos'"
+      >Favoritos</button>
+    </div>
+
+    <!-- ── Tab: Mis datos ──────────────────────────────────────────────────── -->
+    @if (activeTab() === 'datos') {
+      <div class="tab-content">
+
+        @if (profileOk()) {
+          <p class="form-ok">{{ profileOk() }}</p>
+        }
+
+        @if (!profileEditing()) {
+          <div class="prof-section">
+            <div class="prof-row">
+              <span class="prof-row__label">Nombre</span>
+              <span class="prof-row__val">{{ auth.user()?.name }}</span>
+            </div>
+            <div class="prof-row">
+              <span class="prof-row__label">Correo</span>
+              <span class="prof-row__val mono">{{ auth.user()?.email }}</span>
+            </div>
+            @if (auth.user()?.phone) {
+              <div class="prof-row">
+                <span class="prof-row__label">Teléfono</span>
+                <span class="prof-row__val mono">{{ auth.user()?.phone }}</span>
+              </div>
+            }
+          </div>
+          <div class="prof-actions">
+            <button class="btn btn--ghost btn--block" (click)="startEditProfile()">
+              <ion-icon name="create-outline" />
+              Editar perfil
+            </button>
+            <button class="btn btn--ghost btn--block" (click)="pwdSection.set(true)">
+              <ion-icon name="lock-closed-outline" />
+              Cambiar contraseña
+            </button>
+          </div>
+
+        } @else {
+          <!-- Formulario de edición -->
+          <div class="acc-form">
+            <div class="form-field">
+              <label class="form-label" for="p-name">Nombre</label>
+              <input id="p-name" class="form-input" type="text" [(ngModel)]="profileName" />
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="p-phone">Teléfono</label>
+              <input id="p-phone" class="form-input" type="tel" [(ngModel)]="profilePhone" placeholder="+56 9..." />
+            </div>
+            @if (profileError()) {
+              <p class="form-err">{{ profileError() }}</p>
+            }
+            <div class="form-row-2">
+              <button class="btn btn--ghost" (click)="cancelEditProfile()">Cancelar</button>
+              <button class="btn btn--amber" [disabled]="profileLoading()" (click)="saveProfile()">
+                @if (profileLoading()) {
+                  <ion-spinner name="crescent" class="btn-spinner" />
+                } @else {
+                  Guardar
+                }
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Cambio de contraseña (sección desplegable) -->
+        @if (pwdSection()) {
+          <div class="acc-form" style="margin-top: var(--space-4)">
+            <h3 class="form-section-title">Cambiar contraseña</h3>
+            <div class="form-field">
+              <label class="form-label" for="pw-cur">Contraseña actual</label>
+              <input id="pw-cur" class="form-input" type="password" [(ngModel)]="pwdCurrent" autocomplete="current-password" />
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="pw-new">Nueva contraseña</label>
+              <input id="pw-new" class="form-input" type="password" [(ngModel)]="pwdNew" autocomplete="new-password" />
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="pw-cnf">Confirmar nueva contraseña</label>
+              <input id="pw-cnf" class="form-input" type="password" [(ngModel)]="pwdConfirm" autocomplete="new-password" />
+            </div>
+            @if (pwdError()) { <p class="form-err">{{ pwdError() }}</p> }
+            @if (pwdOk())    { <p class="form-ok">{{ pwdOk() }}</p> }
+            <div class="form-row-2">
+              <button class="btn btn--ghost" (click)="pwdSection.set(false)">Cancelar</button>
+              <button class="btn btn--amber" [disabled]="pwdLoading()" (click)="savePwd()">
+                @if (pwdLoading()) { <ion-spinner name="crescent" class="btn-spinner" /> }
+                @else { Guardar }
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Logout -->
+        <div class="prof-logout">
+          <button class="btn btn--danger-ghost btn--block" (click)="logout()">
+            <ion-icon name="log-out-outline" />
+            Cerrar sesión
+          </button>
+        </div>
+
+      </div>
+    }
+
+    <!-- ── Tab: Cotizaciones ───────────────────────────────────────────────── -->
+    @if (activeTab() === 'cotizaciones') {
+      <div class="tab-content">
+        @if (quotesLoading()) {
+          <div class="hist-loading"><ion-spinner name="crescent" /><p class="mono">Cargando cotizaciones…</p></div>
+        } @else if (quotesError()) {
+          <p class="form-err" style="padding: var(--space-4)">{{ quotesError() }}</p>
+        } @else if (quotes().length === 0) {
+          <div class="empty-state">
+            <ion-icon name="document-text-outline" style="font-size:48px;color:var(--ink-4)" />
+            <h3>Sin cotizaciones</h3>
+            <p>Aún no has enviado ninguna cotización.</p>
+            <button class="btn btn--amber" (click)="goToCatalog()">Ver catálogo</button>
+          </div>
+        } @else {
+          @if (reorderOk()) {
+            <p class="form-ok">{{ reorderOk() }}</p>
+          }
+          <ul class="hist-list">
+            @for (q of quotes(); track q._id) {
+              <li class="hist-card">
+                <div class="hist-card__top">
+                  <span class="mono hist-card__folio">{{ q.folio }}</span>
+                  <span class="badge" [class]="quoteStatusCls(q.metadata?.status)">
+                    {{ quoteStatusLabel(q.metadata?.status) }}
+                  </span>
+                </div>
+                <div class="hist-card__meta">
+                  <span class="mono">{{ formatDate(q.createdAt) }}</span>
+                  @if (q.totals?.total != null) {
+                    <span class="mono hist-card__total">{{ formatCLP(q.totals!.total) }}</span>
+                  }
+                </div>
+                @if (q.items && q.items.length > 0) {
+                  <p class="hist-card__items mono">{{ q.items.length }} producto{{ q.items.length === 1 ? '' : 's' }}</p>
+                }
+                <button
+                  class="btn btn--ghost btn--sm hist-card__reorder"
+                  [disabled]="reorderLoading() === q._id"
+                  (click)="reorderQuote(q)"
+                >
+                  @if (reorderLoading() === q._id) {
+                    <ion-spinner name="crescent" class="btn-spinner" />
+                  } @else {
+                    <ion-icon name="refresh-outline" />
+                  }
+                  Reordenar
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <!-- ── Tab: Ventas ────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'ventas') {
+      <div class="tab-content">
+        @if (salesLoading()) {
+          <div class="hist-loading"><ion-spinner name="crescent" /><p class="mono">Cargando compras…</p></div>
+        } @else if (salesError()) {
+          <p class="form-err" style="padding: var(--space-4)">{{ salesError() }}</p>
+        } @else if (sales().length === 0) {
+          <div class="empty-state">
+            <ion-icon name="bag-outline" style="font-size:48px;color:var(--ink-4)" />
+            <h3>Sin compras</h3>
+            <p>Tu historial de compras aparecerá aquí.</p>
+          </div>
+        } @else {
+          @if (reviewOk()) {
+            <p class="form-ok">{{ reviewOk() }}</p>
+          }
+          <ul class="hist-list">
+            @for (s of sales(); track s.id) {
+              <li class="hist-card">
+                <div class="hist-card__top">
+                  <span class="mono hist-card__folio">{{ s.folio }}</span>
+                  <span class="badge" [class]="saleStatusCls(s.status)">
+                    {{ saleStatusLabel(s.status) }}
+                  </span>
+                </div>
+                <div class="hist-card__meta">
+                  <span class="mono">{{ formatDate(s.createdAt) }}</span>
+                  @if (s.totals?.total != null) {
+                    <span class="mono hist-card__total">{{ formatCLP(s.totals!.total) }}</span>
+                  }
+                </div>
+
+                @if (s.items && s.items.length > 0) {
+                  <ul class="sale-items">
+                    @for (item of s.items; track item.productId) {
+                      <li class="sale-item">
+                        <span class="sale-item__name">{{ item.name }}</span>
+                        <div class="sale-item__row">
+                          <span class="mono sale-item__qty">×{{ item.quantity }}</span>
+                          @if (s.status === 'paid') {
+                            <button
+                              class="btn--text sale-item__rev"
+                              (click)="startReview(item.productId, item.name)"
+                            >Reseñar</button>
+                          }
+                        </div>
+                      </li>
+
+                      @if (reviewProductId() === item.productId) {
+                        <li class="review-form">
+                          <div class="review-stars">
+                            @for (n of [1,2,3,4,5]; track n) {
+                              <button
+                                class="review-star"
+                                [class.review-star--on]="reviewRating >= n"
+                                (click)="setRating(n)"
+                                [attr.aria-label]="n + ' estrellas'"
+                              ><ion-icon [name]="reviewRating >= n ? 'star' : 'star-outline'" /></button>
+                            }
+                          </div>
+                          <textarea
+                            class="form-input review-body"
+                            rows="3"
+                            placeholder="Tu experiencia con este producto…"
+                            [(ngModel)]="reviewBody"
+                          ></textarea>
+                          @if (reviewError()) { <p class="form-err">{{ reviewError() }}</p> }
+                          <div class="form-row-2">
+                            <button class="btn btn--ghost btn--sm" (click)="cancelReview()">Cancelar</button>
+                            <button class="btn btn--amber btn--sm" [disabled]="reviewLoading()" (click)="submitReview()">
+                              @if (reviewLoading()) { <ion-spinner name="crescent" class="btn-spinner" /> }
+                              @else { Enviar reseña }
+                            </button>
+                          </div>
+                        </li>
+                      }
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <!-- ── Tab: Favoritos ────────────────────────────────────────────────── -->
+    @if (activeTab() === 'favoritos') {
+      <div class="tab-content">
+        @if (favLoading()) {
+          <div class="hist-loading"><ion-spinner name="crescent" /><p class="mono">Cargando favoritos…</p></div>
+        } @else if (favProducts().length === 0) {
+          <div class="empty-state">
+            <ion-icon name="heart-outline" style="font-size:48px;color:var(--ink-4)" />
+            <h3>Sin favoritos</h3>
+            <p>Guarda productos desde el catálogo o el escáner.</p>
+            <button class="btn btn--amber" (click)="goToCatalog()">Ver catálogo</button>
+          </div>
+        } @else {
+          <ul class="fav-list">
+            @for (p of favProducts(); track p.id) {
+              <li class="fav-card">
+                <div class="fav-card__media">
+                  @if (p.imageUrl) {
+                    <img [src]="p.imageUrl" [alt]="p.name" loading="lazy" />
+                  } @else {
+                    <ion-icon name="heart-outline" style="font-size:24px;opacity:.3;color:var(--navy-200)" />
+                  }
+                </div>
+                <div class="fav-card__info">
+                  <p class="mono fav-card__sku">{{ p.sku }}</p>
+                  <p class="fav-card__name">{{ p.name }}</p>
+                  <p class="mono fav-card__price">
+                    @if (p.offerPrice) { {{ p.offerPrice }} } @else { {{ p.price }} }
+                  </p>
+                </div>
+                <button class="fav-card__del" (click)="removeFavorite(p.id)" aria-label="Quitar de favoritos">
+                  <ion-icon name="heart-outline" style="color:var(--danger)" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+  }
+
+</ion-content>

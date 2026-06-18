@@ -1,0 +1,229 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/catalog" text="" />
+    </ion-buttons>
+    <ion-title>Ficha de producto</ion-title>
+    <ion-buttons slot="end">
+      <button class="fav-btn" (click)="shareProduct()" aria-label="Compartir producto">
+        <ion-icon name="share-outline" />
+      </button>
+      <button class="fav-btn" (click)="toggleFav()" [attr.aria-label]="isFav() ? 'Quitar de favoritos' : 'Agregar a favoritos'">
+        <ion-icon [name]="isFav() ? 'heart-sharp' : 'heart-outline'" />
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  @if (loading()) {
+    <div class="detail-state">
+      <ion-spinner name="crescent" />
+      <p class="mono">Cargando producto…</p>
+    </div>
+  } @else if (error()) {
+    <div class="detail-state detail-state--error">
+      <p>{{ error() }}</p>
+    </div>
+  } @else if (product(); as p) {
+
+    <!-- Imagen -->
+    <div class="pd-media">
+      @if (p.imageUrl) {
+        <img [src]="p.imageUrl" [alt]="p.name" loading="eager" />
+      } @else {
+        <svg class="pd-media__ph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z M3.3 7 12 12l8.7-5M12 22V12" stroke-linejoin="round"/>
+        </svg>
+      }
+      @if (p.offerPrice) {
+        <span class="pd-media__flag mono">OFERTA −{{ p.offerDiscountPercent }}%</span>
+      }
+    </div>
+
+    <!-- Encabezado del producto -->
+    <div class="pd-head">
+      <div class="pd-head__meta">
+        <span class="mono pd-head__sku">{{ p.sku }}</span>
+        @if (p.category) {
+          <span class="mono pd-head__cat">{{ p.category }}</span>
+        }
+      </div>
+      <h1 class="pd-head__name">{{ p.name }}</h1>
+      @if (p.brand) {
+        <p class="pd-head__brand mono">{{ p.brand }}@if (p.model) { · {{ p.model }} }</p>
+      }
+
+      <!-- Precio -->
+      <div class="pd-price">
+        @if (p.offerPrice) {
+          <span class="pd-price__now off mono">{{ p.offerPrice }}</span>
+          <span class="pd-price__old mono">{{ p.price }}</span>
+          @if (p.offerEndsAt) {
+            <span class="pd-price__end mono">Hasta {{ formatDate(p.offerEndsAt) }}</span>
+          }
+        } @else {
+          <span class="pd-price__now mono">{{ p.price }}</span>
+        }
+      </div>
+
+      <!-- Estado de stock -->
+      <span class="pd-head__status mono">{{ p.shortStatus }}</span>
+    </div>
+
+    <!-- CTA: Agregar a cotización -->
+    <div class="pd-cta">
+      @if (inCart()) {
+        <div class="pd-cta__in">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ya está en tu cotización ({{ qs.qtyInCart(p.id) }})
+        </div>
+        <button class="btn btn--ghost btn--sm" (click)="addToQuote()">Agregar otro</button>
+      } @else {
+        <button class="btn btn--amber btn--block" (click)="addToQuote()">
+          @if (added()) { ¡Agregado! } @else { Agregar a cotización }
+        </button>
+      }
+    </div>
+
+    <!-- Descripción -->
+    @if (p.description) {
+      <div class="pd-desc">
+        <p>{{ p.description }}</p>
+      </div>
+    }
+
+    <!-- Tabs de detalles -->
+    <ion-segment [value]="activeTab()" (ionChange)="onTabChange($any($event))" class="pd-seg">
+      @if (p.specs.length > 0) {
+        <ion-segment-button value="specs"><ion-label>Especificaciones</ion-label></ion-segment-button>
+      }
+      @if (hasDims()) {
+        <ion-segment-button value="dims"><ion-label>Dimensiones</ion-label></ion-segment-button>
+      }
+      @if (p.compatibility.length > 0) {
+        <ion-segment-button value="compat"><ion-label>Compatibilidad</ion-label></ion-segment-button>
+      }
+      @if (p.documents.length > 0) {
+        <ion-segment-button value="docs"><ion-label>Documentos</ion-label></ion-segment-button>
+      }
+      @if (p.suppliers.length > 0) {
+        <ion-segment-button value="suppliers"><ion-label>Proveedores</ion-label></ion-segment-button>
+      }
+    </ion-segment>
+
+    <div class="pd-panel">
+
+      <!-- Especificaciones -->
+      @if (activeTab() === 'specs') {
+        @if (p.specs.length > 0) {
+          <table class="spec-table">
+            <tbody>
+              @for (s of p.specs; track s.label) {
+                <tr>
+                  <td class="spec-table__label">{{ s.label }}</td>
+                  <td class="spec-table__value mono">{{ s.value }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="pd-empty">Sin especificaciones registradas.</p>
+        }
+      }
+
+      <!-- Dimensiones -->
+      @if (activeTab() === 'dims') {
+        <table class="spec-table">
+          <tbody>
+            @if (p.dimensions.height) {
+              <tr><td class="spec-table__label">Alto</td><td class="spec-table__value mono">{{ p.dimensions.height }}</td></tr>
+            }
+            @if (p.dimensions.width) {
+              <tr><td class="spec-table__label">Ancho</td><td class="spec-table__value mono">{{ p.dimensions.width }}</td></tr>
+            }
+            @if (p.dimensions.length) {
+              <tr><td class="spec-table__label">Largo</td><td class="spec-table__value mono">{{ p.dimensions.length }}</td></tr>
+            }
+            @if (p.dimensions.diameter) {
+              <tr><td class="spec-table__label">Diámetro</td><td class="spec-table__value mono">{{ p.dimensions.diameter }}</td></tr>
+            }
+            @if (p.dimensions.netWeight) {
+              <tr><td class="spec-table__label">Peso neto</td><td class="spec-table__value mono">{{ p.dimensions.netWeight }}</td></tr>
+            }
+            @if (p.dimensions.grossWeight) {
+              <tr><td class="spec-table__label">Peso bruto</td><td class="spec-table__value mono">{{ p.dimensions.grossWeight }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- Compatibilidad -->
+      @if (activeTab() === 'compat') {
+        @if (p.compatibility.length > 0) {
+          <ul class="compat-list">
+            @for (c of p.compatibility; track c) {
+              <li class="mono">{{ c }}</li>
+            }
+          </ul>
+        } @else {
+          <p class="pd-empty">Sin equipos de compatibilidad registrados.</p>
+        }
+      }
+
+      <!-- Documentos -->
+      @if (activeTab() === 'docs') {
+        @if (p.documents.length > 0) {
+          <ul class="doc-list">
+            @for (d of p.documents; track d.title) {
+              <li class="doc-item">
+                <div class="doc-item__info">
+                  <span class="doc-item__title">{{ d.title }}</span>
+                  <span class="doc-item__meta mono">{{ d.meta }}</span>
+                </div>
+                @if (d.url) {
+                  <a [href]="d.url" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">Ver</a>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="pd-empty">Sin documentos disponibles.</p>
+        }
+      }
+
+      <!-- Proveedores -->
+      @if (activeTab() === 'suppliers') {
+        @if (p.suppliers.length > 0) {
+          <ul class="sup-list">
+            @for (s of p.suppliers; track s.id) {
+              <li class="sup-item">
+                <div class="sup-item__name">{{ s.name }}</div>
+                <div class="sup-item__meta">
+                  <span class="mono">{{ s.location }}</span>
+                  <span class="sup-item__speed mono {{ speedClass(s.speed) }}">{{ speedLabel(s.speed) }}</span>
+                  <span class="mono">{{ s.deliveryTime }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="pd-empty">Sin proveedores asignados.</p>
+        }
+      }
+
+    </div>
+
+    <!-- Tags -->
+    @if (p.tags.length > 0) {
+      <div class="pd-tags">
+        @for (t of p.tags; track t) {
+          <span class="pd-tag mono">{{ t }}</span>
+        }
+      </div>
+    }
+
+  }
+
+</ion-content>

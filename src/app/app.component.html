@@ -1,3 +1,9 @@
 <ion-app>
+  @if (!network.online()) {
+    <div class="offline-banner" role="alert" aria-live="polite">
+      <ion-icon name="wifi-outline" aria-hidden="true" />
+      Sin conexión — algunas funciones no están disponibles
+    </div>
+  }
   <ion-router-outlet></ion-router-outlet>
 </ion-app>

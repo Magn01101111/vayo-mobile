@@ -1,2 +1,198 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// =========================================================
+// VAYO Solutions — Design System "Industrial Marcado"
+// Fuentes: Space Grotesk (sans) + IBM Plex Mono (datos)
+// Tokens portados 1:1 desde vayo-front/src/styles.scss
+// =========================================================
+
+// ── Google Fonts ──────────────────────────────────────────
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  // Fuentes
+  --font-sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+
+  // Pesos
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-black:    800;
+
+  // Escala tipográfica
+  --fs-display: clamp(24px, 6vw, 36px);
+  --fs-h1:      clamp(20px, 5vw, 28px);
+  --fs-h2:      18px;
+  --fs-h3:      15px;
+  --fs-h4:      13px;
+  --fs-body:    14px;
+  --fs-lg:      16px;
+  --fs-sm:      12.5px;
+  --fs-xs:      11.5px;
+  --fs-2xs:     10px;
+  --fs-data-lg: 28px;
+  --fs-data:    13px;
+  --fs-data-sm: 10.5px;
+
+  // Alturas de línea
+  --lh-tight:   1.1;
+  --lh-snug:    1.3;
+  --lh-base:    1.5;
+  --lh-relaxed: 1.68;
+
+  // Tracking
+  --ls-tight:   -.025em;
+  --ls-snug:    -.01em;
+  --ls-normal:  0;
+  --ls-wide:    .03em;
+  --ls-wider:   .06em;
+  --ls-eyebrow: .14em;
+
+  // Navy estructural
+  --navy-900: #0a1828;
+  --navy-800: #0f2236;
+  --navy-700: #173049;
+  --navy-600: #1f3d5c;
+  --navy-300: #7d93ab;
+  --navy-200: #9fb4ca;
+  --navy-100: #cfe0f3;
+
+  // Tinta / texto sobre papel
+  --ink:   #14202c;
+  --ink-2: #41525f;
+  --ink-3: #6a7986;
+  --ink-4: #8b97a2;
+
+  // Líneas y papel
+  --line:    #d9dee3;
+  --line-2:  #e8ebef;
+  --paper:   #ffffff;
+  --paper-2: #f4f6f8;
+  --paper-3: #eef1f4;
+
+  // Azul señal (acción primaria, links, foco)
+  --blue:     #1f6fd4;
+  --blue-700: #195bb0;
+  --blue-600: #1c64c2;
+  --blue-300: #7ab0ef;
+  --blue-200: #b3cff7;
+  --blue-100: #d6e6f9;
+  --blue-50:  #eaf2fc;
+
+  // Ámbar (SOLO CTA principal)
+  --amber:      #ef9d10;
+  --amber-700:  #b87505;
+  --amber-50:   #fdf3df;
+  --amber-line: #f3dca6;
+  --accent-ink: #2a1c00;
+
+  // Semánticos / estados
+  --ok:      #0c6b50;  --ok-bg:      #dff1ea;  --ok-line:    #bfe2d5;
+  --warn:    #8a5a12;  --warn-bg:    #f7ecd6;  --warn-line:  #ecd9ad;
+  --danger:  #b8341a;  --danger-bg:  #fae6e1;  --danger-line:#f0c4ba;
+  --offer:   #c62828;  --offer-bg:   #fbe9e7;
+
+  // Alias semánticos
+  --text-strong:    var(--ink);
+  --text-body:      var(--ink-2);
+  --text-muted:     var(--ink-3);
+  --text-disabled:  var(--ink-4);
+  --text-on-navy:   #e7eef6;
+  --text-on-navy-2: #9fb4ca;
+  --text-on-navy-3: #7d93ab;
+  --ink-inv:        var(--text-on-navy);
+
+  --surface-page:   var(--paper-2);
+  --surface-card:   var(--paper);
+  --surface-sunken: var(--paper-2);
+  --surface-fill:   var(--paper-3);
+  --surface-dark:   var(--navy-900);
+  --surface-dark-2: var(--navy-800);
+
+  --border:         var(--line);
+  --border-subtle:  var(--line-2);
+  --border-strong:  var(--ink-4);
+  --border-dark:    var(--navy-700);
+  --border-on-navy: rgba(255,255,255,.14);
+
+  --brand:       var(--blue);
+  --brand-hover: var(--blue-700);
+  --brand-soft:  var(--blue-50);
+  --accent:      var(--amber);
+  --accent-hover:var(--amber-700);
+  --focus-ring:  var(--blue);
+
+  // Blueprint (rejilla técnica sobre superficies oscuras)
+  --blueprint-line: rgba(120,160,210,.12);
+  --blueprint-art:  #5aa0e8;
+
+  // Estados de cotización
+  --state-draft-fg:    var(--ink-3);   --state-draft-bg:    var(--paper-3);
+  --state-sent-fg:     var(--warn);    --state-sent-bg:     var(--warn-bg);
+  --state-accepted-fg: var(--ok);      --state-accepted-bg: var(--ok-bg);
+  --state-rejected-fg: var(--danger);  --state-rejected-bg: var(--danger-bg);
+  --state-expired-fg:  var(--ink-3);   --state-expired-bg:  var(--paper-3);
+
+  // Espaciado base 4px
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  // Radios firmes (industrial)
+  --r-xs:   2px;
+  --r:      3px;
+  --r-lg:   5px;
+  --r-pill: 999px;
+  --bw:     1px;
+  --bw-2:   1.5px;
+  --bw-3:   3px;
+
+  // Sombras
+  --shadow-sm:   0 1px 3px rgba(10,24,40,.08), 0 1px 2px rgba(10,24,40,.04);
+  --shadow-lg:   0 12px 28px rgba(10,24,40,.16);
+  --focus-shadow:0 0 0 3px rgba(31,111,212,.30);
+
+  // Motion
+  --t-fast: .15s ease;
+  --t-base: .2s ease;
+
+  // ── Ionic CSS variables re-temátizados con tokens VAYO ──────────────────────
+  --ion-background-color:          var(--paper-2);
+  --ion-text-color:                var(--ink);
+  --ion-color-primary:             var(--blue);
+  --ion-color-primary-contrast:    var(--paper);
+  --ion-color-primary-shade:       var(--blue-700);
+  --ion-color-primary-tint:        var(--blue-50);
+  --ion-color-secondary:           var(--navy-700);
+  --ion-color-secondary-contrast:  var(--text-on-navy);
+  --ion-color-tertiary:            var(--amber);
+  --ion-color-tertiary-contrast:   var(--accent-ink);
+  --ion-color-success:             var(--ok);
+  --ion-color-success-contrast:    var(--paper);
+  --ion-color-warning:             var(--warn);
+  --ion-color-warning-contrast:    var(--paper);
+  --ion-color-danger:              var(--danger);
+  --ion-color-danger-contrast:     var(--paper);
+  --ion-color-dark:                var(--navy-900);
+  --ion-color-dark-contrast:       var(--text-on-navy);
+  --ion-color-medium:              var(--ink-3);
+  --ion-color-medium-contrast:     var(--paper);
+  --ion-color-light:               var(--paper-3);
+  --ion-color-light-contrast:      var(--ink);
+  --ion-font-family:               var(--font-sans);
+  --ion-border-color:              var(--line);
+  --ion-tab-bar-background:        var(--navy-900);
+  --ion-tab-bar-color:             var(--navy-300);
+  --ion-tab-bar-color-selected:    var(--amber);
+  --ion-toolbar-background:        var(--navy-900);
+  --ion-toolbar-color:             var(--text-on-navy);
+  --ion-item-background:           var(--paper);
+  --ion-card-background:           var(--paper);
+}

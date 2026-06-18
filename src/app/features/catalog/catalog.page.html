@@ -1,0 +1,180 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Catálogo</ion-title>
+    @if (qs.itemCount() > 0) {
+      <div
+        slot="end"
+        class="cart-badge"
+        (click)="$event.stopPropagation()"
+        role="status"
+        [attr.aria-label]="'Cotización: ' + qs.itemCount() + (qs.itemCount() === 1 ? ' producto' : ' productos')"
+      >
+        <ion-icon name="cart-outline" aria-hidden="true" />
+        <span class="cart-badge__n mono">{{ qs.itemCount() }}</span>
+      </div>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Búsqueda -->
+  <div class="search-wrap">
+    <ion-searchbar
+      placeholder="Buscar por nombre, SKU o marca…"
+      [debounce]="0"
+      animated="false"
+      (ionInput)="onSearchChange($any($event))"
+    />
+  </div>
+
+  <!-- Filtro por categoría -->
+  @if (categories().length > 0) {
+    <div class="cat-strip" role="list" aria-label="Filtrar por categoría">
+      <button
+        class="cat-chip mono"
+        [class.cat-chip--on]="activeSlug() === null"
+        (click)="selectCategory(null)"
+        role="listitem"
+        [attr.aria-pressed]="activeSlug() === null"
+      >Todos</button>
+      @for (cat of categories(); track cat.id) {
+        <button
+          class="cat-chip mono"
+          [class.cat-chip--on]="activeSlug() === cat.slug"
+          (click)="selectCategory(cat.slug)"
+          role="listitem"
+          [attr.aria-pressed]="activeSlug() === cat.slug"
+        >{{ cat.name }}</button>
+      }
+    </div>
+  }
+
+  <!-- Estado: cargando / error -->
+  @if (loading()) {
+    <div class="catalog-state">
+      <ion-spinner name="crescent" />
+      <p class="mono">Cargando productos…</p>
+    </div>
+  } @else if (error()) {
+    <div class="catalog-state catalog-state--error">
+      <p>{{ error() }}</p>
+      <button class="btn btn--ghost btn--sm" (click)="goToPage(currentPage())">Reintentar</button>
+    </div>
+  } @else if (products().length === 0) {
+    <div class="empty-state">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" width="64" height="64" aria-hidden="true">
+        <circle cx="20" cy="20" r="13" stroke="var(--ink-4)"/>
+        <path d="M30 30l10 10" stroke="var(--ink-4)" stroke-linecap="round"/>
+      </svg>
+      <h3>Sin resultados</h3>
+      <p>Intenta con otro término o categoría.</p>
+    </div>
+  } @else {
+
+    <!-- Conteo -->
+    <div class="catalog-meta">
+      <span class="mono">{{ total() }} producto{{ total() === 1 ? '' : 's' }}</span>
+    </div>
+
+    <!-- Grilla de productos -->
+    <div class="pgrid">
+      @for (p of products(); track p.id) {
+        <article
+          class="pcard"
+          (click)="openDetail(p.id)"
+          tabindex="0"
+          (keyup.enter)="openDetail(p.id)"
+          [attr.aria-label]="'Ver ' + p.name"
+        >
+          <div class="pcard__media">
+            @if (p.offerPrice != null) {
+              <span class="pcard__flag mono">
+                −{{ discountPct(p) }}%
+              </span>
+            }
+            @if (p.images?.[0]?.url || p.imageUrl) {
+              <img [src]="p.images?.[0]?.url ?? p.imageUrl" [alt]="p.name" loading="lazy" />
+            } @else {
+              <svg class="pcard__ph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z M3.3 7 12 12l8.7-5M12 22V12" stroke-linejoin="round"/>
+              </svg>
+            }
+          </div>
+
+          <div class="pcard__b">
+            <p class="pcard__sku mono">{{ p.sku }}</p>
+            <h3 class="pcard__name">{{ p.name }}</h3>
+            <div class="pcard__price">
+              @if (p.offerPrice != null) {
+                <span class="pcard__now off mono">{{ formatPrice(p.offerPrice) }}</span>
+                <span class="pcard__old mono">{{ formatPrice(p.price) }}</span>
+              } @else {
+                <span class="pcard__now mono">{{ formatPrice(p.price) }}</span>
+              }
+            </div>
+
+            <button
+              class="pcard__add"
+              [class.pcard__add--in]="inCart(p.id)"
+              (click)="addToQuote($event, p)"
+              [attr.aria-label]="inCart(p.id) ? 'Ya en cotización' : 'Agregar a cotización'"
+            >
+              @if (inCart(p.id)) {
+                <ion-icon name="checkmark-circle" />
+              } @else {
+                <ion-icon name="add-outline" />
+              }
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+
+    <!-- Paginación numerada -->
+    @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Paginación">
+        <button
+          class="pag-btn mono"
+          [class.pag-btn--dis]="currentPage() <= 1"
+          [disabled]="currentPage() <= 1"
+          (click)="goToPage(currentPage() - 1)"
+          aria-label="Página anterior"
+        >‹</button>
+
+        @if (pageRange()[0] > 1) {
+          <button class="pag-btn mono" (click)="goToPage(1)">1</button>
+          @if (pageRange()[0] > 2) {
+            <span class="pag-ellipsis mono">…</span>
+          }
+        }
+
+        @for (p of pageRange(); track p) {
+          <button
+            class="pag-btn mono"
+            [class.pag-btn--cur]="p === currentPage()"
+            [attr.aria-current]="p === currentPage() ? 'page' : null"
+            (click)="goToPage(p)"
+          >{{ p }}</button>
+        }
+
+        @if (pageRange()[pageRange().length - 1] < totalPages()) {
+          @if (pageRange()[pageRange().length - 1] < totalPages() - 1) {
+            <span class="pag-ellipsis mono">…</span>
+          }
+          <button class="pag-btn mono" (click)="goToPage(totalPages())">{{ totalPages() }}</button>
+        }
+
+        <button
+          class="pag-btn mono"
+          [class.pag-btn--dis]="currentPage() >= totalPages()"
+          [disabled]="currentPage() >= totalPages()"
+          (click)="goToPage(currentPage() + 1)"
+          aria-label="Página siguiente"
+        >›</button>
+      </nav>
+    }
+
+  }
+
+</ion-content>

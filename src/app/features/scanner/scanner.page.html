@@ -1,0 +1,330 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Escáner</ion-title>
+    @if (state() === 'results') {
+      <button slot="end" class="reset-btn" (click)="reset()" aria-label="Nueva búsqueda">
+        <ion-icon name="refresh-outline" />
+      </button>
+    }
+    @if (state() === 'compare') {
+      <button slot="start" class="reset-btn" (click)="closeCompare()" aria-label="Volver a resultados">
+        <ion-icon name="close-outline" />
+      </button>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- ══════════════════ IDLE + SCANNING ══════════════════ -->
+  @if (state() === 'idle' || state() === 'scanning') {
+    <div class="scan-wrap">
+
+      <!-- Viewfinder -->
+      <div class="scan-frame" [class.scan-frame--active]="state() === 'scanning'">
+        <div class="scan-frame__inner blueprint-bg">
+
+          @if (capturedImage() && state() === 'scanning') {
+            <img [src]="capturedImage()" class="scan-frame__img" alt="Imagen capturada" />
+          }
+
+          <span class="scan-corner scan-corner--tl"></span>
+          <span class="scan-corner scan-corner--tr"></span>
+          <span class="scan-corner scan-corner--bl"></span>
+          <span class="scan-corner scan-corner--br"></span>
+
+          @if (state() === 'scanning') {
+            <div class="scan-line"></div>
+          } @else {
+            <div class="scan-icon-idle">
+              <ion-icon name="camera-outline" />
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (state() === 'scanning') {
+        <p class="scan-status mono">Analizando imagen…</p>
+        <ion-spinner name="crescent" class="scan-spinner" />
+      } @else {
+        <h2 class="scan-title">Escáner de repuestos</h2>
+        <p class="scan-desc">Toma una foto o sube una imagen para identificar el repuesto.</p>
+
+        @if (scanError()) {
+          <p class="scan-err">{{ scanError() }}</p>
+        }
+
+        <div class="scan-actions">
+          <button class="btn btn--amber btn--block btn--lg" (click)="capture('camera')">
+            <ion-icon name="camera-outline" />
+            Tomar foto
+          </button>
+          <button class="btn btn--ghost btn--block" (click)="capture('gallery')">
+            <ion-icon name="images-outline" />
+            Subir imagen
+          </button>
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- ══════════════════ RESULTADOS ══════════════════ -->
+  @if (state() === 'results') {
+    <div class="results-wrap">
+
+      <!-- Miniatura de la imagen capturada -->
+      @if (capturedImage()) {
+        <div class="result-header">
+          <img [src]="capturedImage()" class="result-header__thumb" alt="Imagen analizada" />
+          <div class="result-header__info">
+            <p class="eyebrow mono">Análisis completado</p>
+            @if (hasResults()) {
+              <p class="result-header__count">
+                {{ candidateGroups().length }} tipo{{ candidateGroups().length === 1 ? '' : 's' }} detectado{{ candidateGroups().length === 1 ? '' : 's' }}
+              </p>
+            } @else {
+              <p class="result-header__count">Sin coincidencias encontradas</p>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- M5-1 Banner de recompensa por escaneos -->
+      @if (auth.isLoggedIn()) {
+        <div class="reward-banner" aria-label="Recompensa por escaneos">
+          @if (rewardCode()) {
+            <div class="reward-banner__claimed">
+              <ion-icon name="trophy-outline" aria-hidden="true" />
+              <div>
+                <p class="reward-banner__sub mono">Tu cupón de descuento:</p>
+                <p class="reward-banner__code mono">{{ rewardCode() }}</p>
+              </div>
+            </div>
+          } @else {
+            <div class="reward-banner__progress-wrap">
+              <div class="reward-banner__hdr">
+                <ion-icon name="trophy-outline" aria-hidden="true" />
+                <span>{{ scanCount() }}/{{ SCAN_REWARD_THRESHOLD }} escaneos con resultados</span>
+              </div>
+              <div
+                class="reward-banner__bar"
+                role="progressbar"
+                [attr.aria-valuenow]="scanCount()"
+                [attr.aria-valuemax]="SCAN_REWARD_THRESHOLD"
+                aria-label="Progreso hacia recompensa"
+              >
+                <div class="reward-banner__fill" [style.width.%]="scanProgress() * 100"></div>
+              </div>
+              @if (rewardReady()) {
+                <button
+                  class="btn btn--amber btn--block reward-banner__btn"
+                  (click)="claimReward()"
+                  [disabled]="rewardLoading()"
+                >
+                  @if (rewardLoading()) {
+                    <ion-spinner name="crescent" style="width:14px;height:14px;--color:var(--accent-ink)" />
+                  } @else {
+                    Reclamar 10% de descuento
+                  }
+                </button>
+                @if (rewardError()) {
+                  <p class="reward-banner__err">{{ rewardError() }}</p>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Sin resultados -->
+      @if (!hasResults()) {
+        <div class="empty-state">
+          <ion-icon name="camera-outline" style="font-size:48px;color:var(--ink-4)" />
+          <h3>Sin coincidencias</h3>
+          <p>No se encontraron productos relacionados. Intenta con otra foto o busca manualmente en el catálogo.</p>
+          <button class="btn btn--amber" (click)="reset()">Intentar de nuevo</button>
+        </div>
+      }
+
+      <!-- Grupos de candidatos -->
+      @for (group of candidateGroups(); track group.detection.searchTerm) {
+        @if (group.products.length > 0) {
+          <div class="cand-group">
+            <div class="cand-group__header">
+              <div class="cand-group__label">
+                <span class="cand-group__det">{{ group.detection.label }}</span>
+                <span class="cand-group__conf mono">{{ pct(group.detection.confidence) }}</span>
+              </div>
+            </div>
+
+            <ul class="cand-list">
+              @for (p of group.products; track p.id) {
+                <li class="cand-card">
+                  <!-- Imagen -->
+                  <div class="cand-card__media" (click)="openDetail(p.id)">
+                    @if (imgUrl(p)) {
+                      <img [src]="imgUrl(p)!" [alt]="p.name" loading="lazy" />
+                    } @else {
+                      <ion-icon name="camera-outline" style="font-size:24px;opacity:.3;color:var(--navy-200)" />
+                    }
+                  </div>
+
+                  <!-- Info -->
+                  <div class="cand-card__info" (click)="openDetail(p.id)">
+                    <p class="mono cand-card__sku">{{ p.sku }}</p>
+                    <p class="cand-card__name">{{ p.name }}</p>
+                    <p class="cand-card__price mono">
+                      @if (p.offerPrice != null) {
+                        <span class="price-off">{{ formatCLP(p.offerPrice) }}</span>
+                        <span class="price-old">{{ formatCLP(p.price) }}</span>
+                      } @else {
+                        {{ formatCLP(p.price) }}
+                      }
+                    </p>
+                  </div>
+
+                  <!-- Acciones -->
+                  <div class="cand-card__actions">
+                    <button
+                      class="cand-action"
+                      [class.cand-action--added]="isAdded(p.id)"
+                      (click)="addToQuote(p)"
+                      [attr.aria-label]="isAdded(p.id) ? 'Agregado' : 'Agregar a cotización'"
+                    >
+                      @if (isAdded(p.id)) {
+                        <ion-icon name="checkmark-circle" />
+                      } @else {
+                        <ion-icon name="add-circle-outline" />
+                      }
+                    </button>
+
+                    <button
+                      class="cand-action"
+                      [class.cand-action--fav]="isFavorite(p.id)"
+                      (click)="toggleFavorite(p.id)"
+                      [attr.aria-label]="isFavorite(p.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'"
+                    >
+                      @if (isFavorite(p.id)) {
+                        <ion-icon name="heart-sharp" />
+                      } @else {
+                        <ion-icon name="heart-outline" />
+                      }
+                    </button>
+
+                    <button
+                      class="cand-action"
+                      (click)="shareProduct(p)"
+                      aria-label="Compartir"
+                    >
+                      @if (shareLoading() === p.id) {
+                        <ion-spinner name="crescent" style="width:18px;height:18px;--color:var(--ink-2)" />
+                      } @else {
+                        <ion-icon name="share-outline" />
+                      }
+                    </button>
+
+                    <!-- M5-7: Agregar al comparador -->
+                    <button
+                      class="cand-action"
+                      [class.cand-action--compare]="isInCompare(p.id)"
+                      (click)="toggleCompare(p)"
+                      [attr.aria-label]="isInCompare(p.id) ? 'Quitar del comparador' : 'Agregar al comparador'"
+                      [disabled]="!isInCompare(p.id) && compareCount() >= 3"
+                    >
+                      <ion-icon name="swap-horizontal-outline" />
+                    </button>
+
+                    <button
+                      class="cand-action cand-action--detail"
+                      (click)="openDetail(p.id)"
+                      aria-label="Ver ficha"
+                    >
+                      <ion-icon name="chevron-forward-outline" />
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+
+      <!-- M5-7 Barra flotante del comparador -->
+      @if (compareCount() > 0) {
+        <div class="compare-bar" role="region" aria-label="Comparador de productos">
+          <span class="compare-bar__count">
+            {{ compareCount() }} seleccionado{{ compareCount() === 1 ? '' : 's' }}
+          </span>
+          <button
+            class="btn btn--amber"
+            (click)="openCompare()"
+            [disabled]="compareCount() < 2"
+            aria-label="Ver comparación"
+          >
+            Comparar
+          </button>
+          <button class="compare-bar__clear" (click)="clearCompare()" aria-label="Limpiar comparador">
+            <ion-icon name="close-outline" />
+          </button>
+        </div>
+      }
+
+      <!-- Nueva búsqueda -->
+      <div class="results-footer" [class.results-footer--with-bar]="compareCount() > 0">
+        <button class="btn btn--ghost btn--block" (click)="reset()">
+          <ion-icon name="refresh-outline" />
+          Nueva búsqueda
+        </button>
+      </div>
+
+    </div>
+  }
+
+  <!-- ══════════════════ COMPARADOR ══════════════════ -->
+  @if (state() === 'compare') {
+    <div class="compare-view">
+
+      <h2 class="compare-view__title">
+        Comparando {{ compareCount() }} productos
+      </h2>
+
+      <!-- Cabecera: imagen + nombre + botón agregar -->
+      <div class="compare-head-row">
+        <div class="compare-head-cell compare-head-cell--empty"></div>
+        @for (p of compareList(); track p.id) {
+          <div class="compare-head-cell">
+            <div class="compare-prod-media">
+              @if (imgUrl(p)) {
+                <img [src]="imgUrl(p)!" [alt]="p.name" />
+              } @else {
+                <ion-icon name="camera-outline" style="font-size:22px;opacity:.3;color:var(--navy-300)" />
+              }
+            </div>
+            <p class="compare-prod-name">{{ p.name }}</p>
+            <button
+              class="btn btn--amber btn--block"
+              [class.btn--ghost]="isAdded(p.id)"
+              (click)="addToQuote(p)"
+              [attr.aria-label]="isAdded(p.id) ? 'Agregado a cotización' : 'Agregar a cotización'"
+            >
+              @if (isAdded(p.id)) { ✓ Agregado } @else { Agregar }
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Filas de comparación -->
+      @for (row of compareRows(); track row.label) {
+        <div class="compare-row">
+          <div class="compare-cell compare-cell--label">{{ row.label }}</div>
+          @for (val of row.values; track $index) {
+            <div class="compare-cell">{{ val }}</div>
+          }
+        </div>
+      }
+
+    </div>
+  }
+
+</ion-content>
