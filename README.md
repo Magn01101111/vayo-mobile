@@ -3,14 +3,14 @@
 Aplicación móvil para el reconocimiento de repuestos. Interfaz creada con TypeScript, HTML y estilos en SCSS. 
 Proyecto orientado a facilitar la identificación y gestión de piezas desde un dispositivo móvil.
 
-Aplicacion Desarrollada por Equipo N°08, Seccion TPY1101.
-Para el curso TALLER APLICADO DE PROGRAMACION_004V 2026-1.
+Aplicacion Desarrollada por Equipo N°08, Seccion TPY1101.<br>
+Para el curso TALLER APLICADO DE PROGRAMACION_004V 2026-1.<br>
 Equipo compuesto por:
 1.- Jorge Escobar - Desarrollador
 2.- Paula Toledo - Desarrollador
 3.- Yoaldry Rodriguez - Scrum Master
 
-Link tablero Trello:
+##Link tablero Trello:
 https://trello.com/invite/b/69cda7590b9b0af7953f5cbc/ATTI72d0d76e8cc14186865c844e33dbd214797D1434/vayo-solutions
 
 ## Características
