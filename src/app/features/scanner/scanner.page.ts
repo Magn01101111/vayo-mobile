@@ -97,6 +97,9 @@ export class ScannerPage {
       heartSharp, addCircleOutline, checkmarkCircle, refreshOutline,
       chevronForwardOutline, swapHorizontalOutline, closeOutline, trophyOutline,
     });
+    // Pre-carga el modelo ONNX en segundo plano al abrir el escáner,
+    // así la primera inferencia no espera la descarga de 77 MB.
+    this.ml.warmup();
   }
 
   // ── Captura (M3-1) ─────────────────────────────────────────────────────

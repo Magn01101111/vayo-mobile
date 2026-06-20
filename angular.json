@@ -33,6 +33,21 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "ort-wasm-simd-threaded*.{wasm,mjs}",
+                "input": "node_modules/onnxruntime-web/dist",
+                "output": "assets/ml/wasm"
+              },
+              {
+                "glob": "model.onnx",
+                "input": "ia_related/outputs",
+                "output": "assets/ml"
+              },
+              {
+                "glob": "{labels,inference_meta}.json",
+                "input": "ia_related/outputs",
+                "output": "assets/ml"
               }
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
