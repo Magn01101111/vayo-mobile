@@ -1,0 +1,12 @@
+# Generados por el pipeline (reproducibles) — no versionar
+dataset/
+outputs/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Temporales
+_smoke*.py
+_smoke*.log

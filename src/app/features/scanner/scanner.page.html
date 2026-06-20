@@ -15,15 +15,10 @@
 </ion-header>
 
 <ion-content>
-
-  <!-- ══════════════════ IDLE + SCANNING ══════════════════ -->
   @if (state() === 'idle' || state() === 'scanning') {
     <div class="scan-wrap">
-
-      <!-- Viewfinder -->
       <div class="scan-frame" [class.scan-frame--active]="state() === 'scanning'">
         <div class="scan-frame__inner blueprint-bg">
-
           @if (capturedImage() && state() === 'scanning') {
             <img [src]="capturedImage()" class="scan-frame__img" alt="Imagen capturada" />
           }
@@ -65,15 +60,11 @@
           </button>
         </div>
       }
-
     </div>
   }
 
-  <!-- ══════════════════ RESULTADOS ══════════════════ -->
   @if (state() === 'results') {
     <div class="results-wrap">
-
-      <!-- Miniatura de la imagen capturada -->
       @if (capturedImage()) {
         <div class="result-header">
           <img [src]="capturedImage()" class="result-header__thumb" alt="Imagen analizada" />
@@ -83,6 +74,12 @@
               <p class="result-header__count">
                 {{ candidateGroups().length }} tipo{{ candidateGroups().length === 1 ? '' : 's' }} detectado{{ candidateGroups().length === 1 ? '' : 's' }}
               </p>
+            } @else if (recognizedButMissingInCatalog()) {
+              <p class="result-header__count">
+                Modelo reconoció {{ topPrediction()?.label }} {{ topPrediction() ? '(' + pct(topPrediction()!.confidence) + ')' : '' }}, pero el catálogo no devolvió productos
+              </p>
+            } @else if (topPrediction()) {
+              <p class="result-header__count">El modelo no confirmó una coincidencia utilizable</p>
             } @else {
               <p class="result-header__count">Sin coincidencias encontradas</p>
             }
@@ -90,7 +87,6 @@
         </div>
       }
 
-      <!-- M5-1 Banner de recompensa por escaneos -->
       @if (auth.isLoggedIn()) {
         <div class="reward-banner" aria-label="Recompensa por escaneos">
           @if (rewardCode()) {
@@ -137,17 +133,20 @@
         </div>
       }
 
-      <!-- Sin resultados -->
       @if (!hasResults()) {
         <div class="empty-state">
           <ion-icon name="camera-outline" style="font-size:48px;color:var(--ink-4)" />
-          <h3>Sin coincidencias</h3>
-          <p>No se encontraron productos relacionados. Intenta con otra foto o busca manualmente en el catálogo.</p>
+          <h3>{{ emptyStateTitle() }}</h3>
+          <p>{{ emptyStateMessage() }}</p>
+          @if (topPrediction()) {
+            <p class="mono" style="margin-top:10px;color:var(--ink-3)">
+              Mejor predicción del modelo: {{ topPrediction()!.label }} · {{ pct(topPrediction()!.confidence) }}
+            </p>
+          }
           <button class="btn btn--amber" (click)="reset()">Intentar de nuevo</button>
         </div>
       }
 
-      <!-- Grupos de candidatos -->
       @for (group of candidateGroups(); track group.detection.searchTerm) {
         @if (group.products.length > 0) {
           <div class="cand-group">
@@ -161,7 +160,6 @@
             <ul class="cand-list">
               @for (p of group.products; track p.id) {
                 <li class="cand-card">
-                  <!-- Imagen -->
                   <div class="cand-card__media" (click)="openDetail(p.id)">
                     @if (imgUrl(p)) {
                       <img [src]="imgUrl(p)!" [alt]="p.name" loading="lazy" />
@@ -170,7 +168,6 @@
                     }
                   </div>
 
-                  <!-- Info -->
                   <div class="cand-card__info" (click)="openDetail(p.id)">
                     <p class="mono cand-card__sku">{{ p.sku }}</p>
                     <p class="cand-card__name">{{ p.name }}</p>
@@ -184,7 +181,6 @@
                     </p>
                   </div>
 
-                  <!-- Acciones -->
                   <div class="cand-card__actions">
                     <button
                       class="cand-action"
@@ -212,11 +208,7 @@
                       }
                     </button>
 
-                    <button
-                      class="cand-action"
-                      (click)="shareProduct(p)"
-                      aria-label="Compartir"
-                    >
+                    <button class="cand-action" (click)="shareProduct(p)" aria-label="Compartir">
                       @if (shareLoading() === p.id) {
                         <ion-spinner name="crescent" style="width:18px;height:18px;--color:var(--ink-2)" />
                       } @else {
@@ -224,7 +216,6 @@
                       }
                     </button>
 
-                    <!-- M5-7: Agregar al comparador -->
                     <button
                       class="cand-action"
                       [class.cand-action--compare]="isInCompare(p.id)"
@@ -250,7 +241,6 @@
         }
       }
 
-      <!-- M5-7 Barra flotante del comparador -->
       @if (compareCount() > 0) {
         <div class="compare-bar" role="region" aria-label="Comparador de productos">
           <span class="compare-bar__count">
@@ -270,26 +260,21 @@
         </div>
       }
 
-      <!-- Nueva búsqueda -->
       <div class="results-footer" [class.results-footer--with-bar]="compareCount() > 0">
         <button class="btn btn--ghost btn--block" (click)="reset()">
           <ion-icon name="refresh-outline" />
           Nueva búsqueda
         </button>
       </div>
-
     </div>
   }
 
-  <!-- ══════════════════ COMPARADOR ══════════════════ -->
   @if (state() === 'compare') {
     <div class="compare-view">
-
       <h2 class="compare-view__title">
         Comparando {{ compareCount() }} productos
       </h2>
 
-      <!-- Cabecera: imagen + nombre + botón agregar -->
       <div class="compare-head-row">
         <div class="compare-head-cell compare-head-cell--empty"></div>
         @for (p of compareList(); track p.id) {
@@ -314,7 +299,6 @@
         }
       </div>
 
-      <!-- Filas de comparación -->
       @for (row of compareRows(); track row.label) {
         <div class="compare-row">
           <div class="compare-cell compare-cell--label">{{ row.label }}</div>
@@ -323,8 +307,6 @@
           }
         </div>
       }
-
     </div>
   }
-
 </ion-content>

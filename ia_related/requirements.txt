@@ -1,0 +1,20 @@
+# Dependencias del pipeline CNN VAYO.
+# TODAS ya están en tu entorno conda "yolo" — este archivo es para reproducibilidad.
+#
+#   conda activate yolo
+#   pip install -r requirements.txt   # (no instalará nada nuevo si ya están)
+
+torch>=2.5            # tu build: 2.11.0+cu128 (CUDA 12.8, soporta RTX 5060/Blackwell)
+torchvision>=0.20     # modelos preentrenados + transforms (tu build: 0.26.0)
+pillow>=10            # carga RGBA + compositing alfa (tu build: 12.2.0)
+numpy>=1.26           # fondos procedurales y métricas
+opencv-python>=4.8    # disponible para utilidades de imagen
+matplotlib>=3.8       # curvas, matriz de confusión, histograma
+tqdm>=4.66            # barras de progreso
+PyYAML>=6             # config.yaml
+onnx>=1.16            # export
+onnxruntime-gpu>=1.18 # verificación del ONNX (o onnxruntime CPU)
+
+# --- Opcionales (NO obligatorios; el código funciona sin ellos) -------------
+# scikit-learn        # classification_report / métricas alternativas más cómodas
+# tensorboard         # dashboards de entrenamiento en vivo

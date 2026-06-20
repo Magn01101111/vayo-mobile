@@ -1,4 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000/api',
+  // En desarrollo web usamos el backend desplegado en Render.
+  // Si en algun momento vuelven a levantar el backend local,
+  // este valor se puede cambiar temporalmente a http://localhost:3000/api.
+  apiUrl: 'https://vayo-solutions-backend.onrender.com/api',
 };

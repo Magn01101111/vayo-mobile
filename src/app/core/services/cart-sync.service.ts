@@ -20,10 +20,11 @@ export class CartSyncService {
   private readonly qs   = inject(QuoteService);
 
   private readonly _save$ = new Subject<void>();
-  private _saveSubscription: ReturnType<typeof this._save$.pipe> | null = null;
 
-  init(): void {
-    // Debounce saves: 2s after last change
+  constructor() {
+    // El constructor de un @Injectable ES un contexto de inyección, por lo que effect()
+    // puede usarse aquí. Llamarlo desde ngOnInit (contexto de ciclo de vida del componente)
+    // no es válido y lanza NG0203.
     this._save$.pipe(debounceTime(2000)).subscribe(() => this.persist());
 
     effect(() => {
@@ -33,7 +34,6 @@ export class CartSyncService {
       }
     });
 
-    // Watch cart changes and trigger debounced save when logged in
     effect(() => {
       this.qs.items(); // track
       if (this.auth.isLoggedIn()) {
@@ -41,6 +41,9 @@ export class CartSyncService {
       }
     });
   }
+
+  // Mantenido por compatibilidad con app.component.ts (ahora no-op: todo está en el constructor).
+  init(): void {}
 
   private load(): void {
     this.api.get<ApiResponse<{ items: CartItem[] }>>(API_CONFIG.endpoints.cart).subscribe({

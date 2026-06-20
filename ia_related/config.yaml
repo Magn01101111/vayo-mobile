@@ -1,0 +1,93 @@
+# ───────────────────────────────────────────────────────────────────────────
+# Configuración central del entrenamiento CNN — VAYO
+# La justificación de cada valor está en justificacion-entrenamiento/
+# ───────────────────────────────────────────────────────────────────────────
+
+seed: 42                      # reproducibilidad (split, init, shuffle)
+
+# --- Datos -------------------------------------------------------------------
+raw_dir: "."                  # carpeta donde viven las subcarpetas de clase (recortes con alfa)
+extra_dir: "data_extra"       # FOTOS REALES extra para entrenar (positivas y negativas). Ver más abajo.
+classes: ["CTRL-ETG-4AMF25"]  # clases reales (SKU). Para agregar productos: añade su carpeta y su nombre aquí.
+negative_class: "otros"       # clase negativa (rechazo): sintética + reales de data_extra/otros. Ver doc 09.
+dataset_dir: "dataset"        # salida de prepare_dataset (manifest + copia por split). SE REGENERA (no editar a mano).
+outputs_dir: "outputs"        # checkpoints, curvas, métricas, onnx
+
+# extra_dir (data_extra/) — fotos REALES que SÍ persisten (dataset_dir se borra en cada prepare):
+#   data_extra/<SKU>/    -> fotos reales del producto (se mezclan como POSITIVOS, sin compositing)
+#   data_extra/otros/    -> fotos de OTROS productos/objetos (NEGATIVOS reales, para rechazar look-alikes)
+# Si están vacías, el entrenamiento usa solo los recortes de raw_dir + negativos sintéticos.
+
+split:                        # ver doc 08
+  train: 0.70
+  val:   0.15
+  test:  0.15
+
+negatives:
+  ratio_per_split: 1.0        # nº negativos = ratio * nº positivos (por split)
+
+# --- Imagen ------------------------------------------------------------------
+image:                        # ver doc 03
+  size: 384                   # 384 para efficientnet_v2_s; usar 224 para b0/mobilenet/resnet
+  mean: [0.485, 0.456, 0.406] # estadísticos ImageNet (requisito del preentrenado)
+  std:  [0.229, 0.224, 0.225]
+
+# --- Modelo ------------------------------------------------------------------
+model:                        # ver doc 02
+  name: "efficientnet_v2_s"   # efficientnet_v2_s | efficientnet_b0 | mobilenet_v3_large | resnet50
+  pretrained: true
+
+# --- Entrenamiento -----------------------------------------------------------
+train:
+  batch_size: 16              # ver doc 04 (baja a 8 si hay OOM)
+  accumulation_steps: 1       # batch efectivo = batch_size * accumulation_steps
+  num_workers: 4
+  amp: true                   # precisión mixta (doc 03)
+  amp_dtype: "float16"        # "float16" o "bfloat16"
+  label_smoothing: 0.1        # doc 06
+  weight_decay: 0.0001        # doc 06
+
+  # Total de épocas ≈ 180 (20 fase 1 + 160 fase 2). El cosine de la fase 2 decae el LR
+  # a lo largo de sus 160 épocas. Con dataset chico cada época es muy rápida, así que se
+  # entrena largo a propósito para que el fine-tuning adapte bien las features.
+  phase1:                     # feature extraction: backbone congelado, solo cabeza (doc 05)
+    epochs: 20
+    lr: 0.001
+
+  phase2:                     # fine-tuning: descongela bloques finales (doc 05)
+    epochs: 160
+    lr: 0.0001
+    fine_tune_blocks: 3       # nº de bloques finales del backbone a descongelar (-1 = todos)
+    warmup_epochs: 2          # warmup lineal antes del cosine
+
+  # Early stopping DESACTIVADO a propósito (enabled: false):
+  # con este dataset la val_acc satura a 1.0 casi de inmediato (epoch ~2), así que el early
+  # stopping cortaba el entrenamiento demasiado pronto y no dejaba afinar. Como entrenar es
+  # barato aquí, preferimos correr las 180 épocas completas. (Ver nota añadida en doc 05.)
+  # Si algún día el dataset crece y conviene reactivarlo, pon enabled: true.
+  early_stopping:             # doc 05
+    enabled: false
+    patience: 13
+    monitor: "val_acc"        # "val_acc" o "val_loss" (también define el criterio de best.pt)
+
+# --- Data augmentation (solo train) -----------------------------------------
+augment:                      # ver doc 07
+  scale_min: 0.50             # tamaño del producto relativo al lienzo
+  scale_max: 0.90
+  rotation_deg: 25
+  shear_deg: 8
+  scale_jitter: [0.9, 1.1]
+  perspective: 0.30
+  perspective_p: 0.5
+  hflip_p: 0.5
+  color_jitter: [0.3, 0.3, 0.3, 0.05]   # brillo, contraste, saturación, tono
+  blur_p: 0.3
+  erasing_p: 0.25
+
+# --- Inferencia / export -----------------------------------------------------
+inference:
+  confidence_threshold: 0.70  # doc 09 (rechazo); se calibra con evaluate.py
+
+onnx:
+  opset: 17
+  filename: "model.onnx"

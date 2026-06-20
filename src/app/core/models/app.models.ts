@@ -89,8 +89,16 @@ export interface ScannerDetection {
   bbox?: { x: number; y: number; w: number; h: number };
 }
 
+export interface DetectionTopPrediction {
+  label: string;
+  confidence: number;
+  rejected: boolean;
+  rejectReason?: 'negative_class' | 'low_confidence';
+}
+
 export interface DetectionResult {
   detections: ScannerDetection[];
   source: 'live' | 'upload';
   modelVersion: string;
+  topPrediction?: DetectionTopPrediction;
 }
