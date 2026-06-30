@@ -23,9 +23,22 @@ export class AppComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    void this.auth.init();
-    await this.network.init();
-    this.cartSync.init();
-    void this.pushService.init();
+    void this.auth.init().catch((error) => {
+      console.error('[App] Error inicializando sesion:', error);
+    });
+
+    await this.network.init().catch((error) => {
+      console.error('[App] Error inicializando red:', error);
+    });
+
+    try {
+      this.cartSync.init();
+    } catch (error) {
+      console.error('[App] Error inicializando sincronizacion de carrito:', error);
+    }
+
+    void this.pushService.init().catch((error) => {
+      console.error('[App] Error inicializando push:', error);
+    });
   }
 }

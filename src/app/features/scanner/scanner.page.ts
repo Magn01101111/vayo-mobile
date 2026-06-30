@@ -128,8 +128,6 @@ export class ScannerPage {
       closeOutline,
       trophyOutline,
     });
-
-    this.ml.warmup();
   }
 
   async capture(source: 'camera' | 'gallery'): Promise<void> {
