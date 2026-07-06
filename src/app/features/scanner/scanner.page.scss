@@ -98,6 +98,12 @@
   color: var(--ink-2);
   text-align: center;
   margin: 0;
+
+  &--subtle {
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+    margin-top: calc(var(--space-2) * -1);
+  }
 }
 
 .scan-spinner {
@@ -118,6 +124,20 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+.scan-mode-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.scan-mode-note {
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+  text-align: center;
+  margin: 0;
 }
 
 // ── Reset button en toolbar ───────────────────────────────────────────────────

@@ -40,10 +40,36 @@
 
       @if (state() === 'scanning') {
         <p class="scan-status mono">Analizando imagen…</p>
+        <p class="scan-status scan-status--subtle mono">{{ modeLabel() }}</p>
         <ion-spinner name="crescent" class="scan-spinner" />
       } @else {
         <h2 class="scan-title">Escáner de repuestos</h2>
         <p class="scan-desc">Toma una foto o sube una imagen para identificar el repuesto.</p>
+
+        <div class="scan-mode-actions">
+          <button
+            class="btn btn--block"
+            [class.btn--amber]="inferenceMode() === 'local'"
+            [class.btn--ghost]="inferenceMode() !== 'local'"
+            (click)="setInferenceMode('local')"
+          >
+            Inferencia local
+          </button>
+          <button
+            class="btn btn--block"
+            [class.btn--amber]="inferenceMode() === 'web'"
+            [class.btn--ghost]="inferenceMode() !== 'web'"
+            (click)="setInferenceMode('web')"
+          >
+            Inferencia web
+          </button>
+        </div>
+
+        <p class="scan-mode-note mono">Motor actual: {{ modeLabel() }}</p>
+
+        @if (inferenceMode() === 'web' && !hasWebInference) {
+          <p class="scan-err">La inferencia web no tiene una URL configurada en la app.</p>
+        }
 
         @if (scanError()) {
           <p class="scan-err">{{ scanError() }}</p>

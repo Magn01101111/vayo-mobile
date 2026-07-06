@@ -17,7 +17,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { FavoriteService } from '../../core/services/favorite.service';
-import { MlDetectService } from '../../core/services/ml-detect.service';
+import { InferenceMode, MlDetectService } from '../../core/services/ml-detect.service';
 import { QuoteService } from '../../core/services/quote.service';
 import { ApiProductListItem, ApiResponse } from '../../core/models/api.models';
 import { DetectionResult, ScannerDetection } from '../../core/models/app.models';
@@ -54,6 +54,7 @@ export class ScannerPage {
   private readonly api = inject(ApiService);
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  readonly hasWebInference = this.ml.hasWebInference;
 
   readonly SCAN_REWARD_THRESHOLD = SCAN_REWARD_THRESHOLD;
 
@@ -62,6 +63,7 @@ export class ScannerPage {
   readonly candidateGroups = signal<CandidateGroup[]>([]);
   readonly analysisResult = signal<DetectionResult | null>(null);
   readonly scanError = signal('');
+  readonly inferenceMode = signal<InferenceMode>('local');
   readonly addedIds = signal<Set<string>>(new Set());
   readonly shareLoading = signal<string | null>(null);
 
@@ -92,6 +94,8 @@ export class ScannerPage {
   readonly hasModelDetection = computed(() =>
     (this.analysisResult()?.detections.length ?? 0) > 0);
   readonly topPrediction = computed(() => this.analysisResult()?.topPrediction ?? null);
+  readonly modeLabel = computed(() =>
+    this.inferenceMode() === 'local' ? 'Inferencia local (ONNX en la app)' : 'Inferencia web (Cloud Run)');
   readonly recognizedButMissingInCatalog = computed(() =>
     this.hasModelDetection() && !this.hasResults());
   readonly emptyStateTitle = computed(() => {
@@ -128,10 +132,15 @@ export class ScannerPage {
       closeOutline,
       trophyOutline,
     });
+    this.ml.warmup('local');
   }
 
   async capture(source: 'camera' | 'gallery'): Promise<void> {
     this.scanError.set('');
+    console.info('[Scanner] Captura solicitada.', {
+      source,
+      inferenceMode: this.inferenceMode(),
+    });
 
     try {
       const photo = await Camera.getPhoto({
@@ -159,14 +168,21 @@ export class ScannerPage {
   }
 
   private scan(imageDataUrl: string, source: 'live' | 'upload'): void {
+    const mode = this.inferenceMode();
     this.state.set('scanning');
     this.candidateGroups.set([]);
     this.analysisResult.set(null);
 
-    this.ml.detect(imageDataUrl, source).subscribe({
+    console.info('[Scanner] Iniciando analisis.', { source, inferenceMode: mode });
+    this.ml.detect(imageDataUrl, source, mode).subscribe({
       next: result => {
         this.analysisResult.set(result);
-        console.info('[Scanner] Resultado del modelo:', result);
+        console.info('[Scanner] Resultado del modelo:', {
+          inferenceMode: mode,
+          modelVersion: result.modelVersion,
+          detections: result.detections,
+          topPrediction: result.topPrediction,
+        });
         const above = result.detections
           .filter(d => d.confidence >= this.ml.CONFIDENCE_THRESHOLD)
           .slice(0, 3);
@@ -218,6 +234,16 @@ export class ScannerPage {
         this.state.set('idle');
       },
     });
+  }
+
+  setInferenceMode(mode: InferenceMode): void {
+    this.inferenceMode.set(mode);
+    this.scanError.set('');
+    console.info('[Scanner] Modo de inferencia actualizado.', {
+      mode,
+      hasWebInference: this.hasWebInference,
+    });
+    this.ml.warmup(mode);
   }
 
   reset(): void {
