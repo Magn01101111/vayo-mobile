@@ -24,6 +24,8 @@ export interface OnnxPrediction {
   rejectReason?: 'negative_class' | 'low_confidence';
 }
 
+const MIN_CONFIDENCE_THRESHOLD = 0.94;
+
 @Injectable({ providedIn: 'root' })
 export class MlInferenceService {
   private session: ort.InferenceSession | null = null;
@@ -76,7 +78,7 @@ export class MlInferenceService {
     console.info('[MlInference] Modelo ONNX listo.', {
       inputSize: this.meta.input_size,
       classes: this.meta.classes,
-      threshold: this.meta.confidence_threshold,
+      threshold: Math.max(this.meta.confidence_threshold, MIN_CONFIDENCE_THRESHOLD),
     });
   }
 
@@ -113,6 +115,7 @@ export class MlInferenceService {
 
   private postprocess(logits: Float32Array): OnnxPrediction {
     const { confidence_threshold, negative_class, classes } = this.meta!;
+    const effectiveThreshold = Math.max(confidence_threshold, MIN_CONFIDENCE_THRESHOLD);
     const probs = this.softmax(logits);
 
     let topIdx = 0;
@@ -122,10 +125,10 @@ export class MlInferenceService {
 
     const label = classes[topIdx];
     const confidence = probs[topIdx];
-    const rejected = label === negative_class || confidence < confidence_threshold;
+    const rejected = label === negative_class || confidence < effectiveThreshold;
     const rejectReason = label === negative_class
       ? 'negative_class'
-      : confidence < confidence_threshold
+      : confidence < effectiveThreshold
         ? 'low_confidence'
         : undefined;
 

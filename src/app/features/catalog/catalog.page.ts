@@ -106,11 +106,17 @@ export class CatalogPage implements OnInit, OnDestroy {
 
   addToQuote(ev: Event, product: ApiProductListItem): void {
     ev.stopPropagation();
-    this.qs.add(mapToProductCard(product));
+    const card = mapToProductCard(product);
+    if (!card.isPurchasable) return;
+    this.qs.add(card);
   }
 
   inCart(id: string): boolean {
     return this.qs.isInCart(id);
+  }
+
+  isPurchasable(product: ApiProductListItem): boolean {
+    return mapToProductCard(product).isPurchasable !== false;
   }
 
   discountPct(p: ApiProductListItem): number {

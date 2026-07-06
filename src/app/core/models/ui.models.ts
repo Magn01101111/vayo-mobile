@@ -37,6 +37,9 @@ export interface ProductCardData {
   images?: string[];
   shortStatus: string;
   stockLabel: string;
+  stockRaw?: number | null;
+  availabilityStatus?: string | null;
+  isPurchasable?: boolean;
   isFeatured?: boolean;
   offerPrice?: string | null;
   offerPriceRaw?: number | null;
@@ -58,6 +61,9 @@ export interface ProductDetailData {
   images?: string[];
   shortStatus: string;
   stockLabel: string;
+  stockRaw?: number | null;
+  availabilityStatus?: string | null;
+  isPurchasable?: boolean;
   isFeatured?: boolean;
   offerPrice?: string | null;
   offerPriceRaw?: number | null;

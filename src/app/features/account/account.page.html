@@ -420,6 +420,9 @@
           @if (reorderOk()) {
             <p class="form-ok">{{ reorderOk() }}</p>
           }
+          @if (payError()) {
+            <p class="form-err">{{ payError() }}</p>
+          }
           <ul class="hist-list">
             @for (q of quotes(); track q._id) {
               <li class="hist-card">
@@ -450,6 +453,12 @@
                   }
                   Reordenar
                 </button>
+                @if (saleForQuote(q); as pendingSale) {
+                  <button class="btn btn--amber btn--sm" [disabled]="payingSaleId() === pendingSale.id" (click)="payQuote(q)">
+                    @if (payingSaleId() === pendingSale.id) { <ion-spinner name="crescent" class="btn-spinner" /> }
+                    @else { Pagar con Webpay }
+                  </button>
+                }
               </li>
             }
           </ul>

@@ -19,7 +19,7 @@ const SKU_META: Record<string, Pick<ScannerDetection, 'partType' | 'categorySlug
 export class MlDetectService {
   private readonly mlInference = inject(MlInferenceService);
 
-  readonly CONFIDENCE_THRESHOLD = 0.5;
+  readonly CONFIDENCE_THRESHOLD = 0.94;
 
   warmup(): void {
     this.mlInference.warmup();

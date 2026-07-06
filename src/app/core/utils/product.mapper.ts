@@ -17,15 +17,33 @@ function formatCLP(value: number | null | undefined): string {
   }).format(value);
 }
 
+function isActiveOffer(p: Pick<ApiProductListItem, 'offerPrice' | 'price' | 'offerStartsAt' | 'offerEndsAt'>): boolean {
+  if (p.offerPrice == null || p.price == null || p.offerPrice <= 0 || p.offerPrice >= p.price) return false;
+  const now = Date.now();
+  const starts = p.offerStartsAt ? new Date(p.offerStartsAt).getTime() : null;
+  const ends = p.offerEndsAt ? new Date(p.offerEndsAt).getTime() : null;
+  if (starts != null && !Number.isNaN(starts) && starts > now) return false;
+  if (ends != null && !Number.isNaN(ends) && ends < now) return false;
+  return true;
+}
+
 export function mapToProductCard(
   p: ApiProductListItem,
   categoryLabel = p.categoryName ?? 'Sin categoría',
   categorySlug = '',
 ): ProductCardData {
+  const hasOffer = isActiveOffer(p);
+  const effectivePrice = hasOffer ? p.offerPrice : p.price;
   const offerPct =
-    p.offerPrice && p.price
+    hasOffer && p.offerPrice && p.price
       ? Math.round((1 - p.offerPrice / p.price) * 100)
       : undefined;
+  const isPurchasable =
+    p.isActive !== false &&
+    p.availabilityStatus === 'in_stock' &&
+    (p.stock ?? 0) > 0 &&
+    effectivePrice != null &&
+    effectivePrice > 0;
 
   return {
     id: p.id,
@@ -40,10 +58,13 @@ export function mapToProductCard(
     images: p.images?.map((i) => i.url),
     shortStatus: AVAILABILITY[p.availabilityStatus] ?? p.availabilityStatus,
     stockLabel: p.stock > 0 ? `${p.stock} en stock` : 'Sin stock',
+    stockRaw: p.stock,
+    availabilityStatus: p.availabilityStatus,
+    isPurchasable,
     isFeatured: p.isFeatured,
-    offerPrice: p.offerPrice != null ? formatCLP(p.offerPrice) : null,
-    offerPriceRaw: p.offerPrice ?? null,
-    offerEndsAt: p.offerEndsAt ?? null,
+    offerPrice: hasOffer && p.offerPrice != null ? formatCLP(p.offerPrice) : null,
+    offerPriceRaw: hasOffer ? p.offerPrice ?? null : null,
+    offerEndsAt: hasOffer ? p.offerEndsAt ?? null : null,
     offerDiscountPercent: offerPct,
     tags: p.tags ?? [],
   };

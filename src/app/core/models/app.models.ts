@@ -48,7 +48,7 @@ export interface Coupon {
 
 export type QuotationCurrency = 'CLP' | 'USD' | 'UF';
 
-export type PaymentTerms = 'contado' | '15-dias' | '30-dias' | '60-dias';
+export type PaymentTerms = 'contado' | '15-dias' | '30-dias' | '60-dias' | '90-dias';
 
 export type DeliveryTerms = 'pickup' | 'delivery' | 'shipping';
 

@@ -15,6 +15,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { FavoriteService } from '../../core/services/favorite.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { QuoteService } from '../../core/services/quote.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { ApiService } from '../../core/services/api.service';
 import { API_CONFIG } from '../../core/config/api.config';
 import { ApiQuote, ApiSale, ApiResponse } from '../../core/models/api.models';
@@ -38,6 +39,7 @@ export class AccountPage implements OnInit {
   readonly favSvc  = inject(FavoriteService);
   private readonly catalog = inject(CatalogService);
   private readonly qs      = inject(QuoteService);
+  private readonly payment = inject(PaymentService);
   private readonly api     = inject(ApiService);
   private readonly router  = inject(Router);
 
@@ -91,6 +93,8 @@ export class AccountPage implements OnInit {
   sales        = signal<ApiSale[]>([]);
   salesLoading = signal(false);
   salesError   = signal('');
+  payingSaleId = signal<string | null>(null);
+  payError     = signal('');
 
   // ── Favoritos ──────────────────────────────────────────────────────────────
   private readonly allProducts = signal<ProductCardData[]>([]);
@@ -388,6 +392,35 @@ export class AccountPage implements OnInit {
       next: res => { this.sales.set(res.data ?? []); this.salesLoading.set(false); },
       error: () => { this.salesError.set('Error al cargar ventas.'); this.salesLoading.set(false); },
     });
+  }
+
+  paySale(sale: ApiSale): void {
+    if (!sale.id || sale.status !== 'pending' || this.payingSaleId()) return;
+    this.payError.set('');
+    this.payingSaleId.set(sale.id);
+    this.payment.initWebpay(sale.id).subscribe({
+      next: res => {
+        this.payment.redirectToWebpay(res.data.url, res.data.token);
+      },
+      error: err => {
+        this.payingSaleId.set(null);
+        this.payError.set((err?.error?.error as string) ?? 'No se pudo iniciar el pago con Webpay.');
+      },
+    });
+  }
+
+  saleForQuote(quote: ApiQuote): ApiSale | null {
+    if (quote.metadata?.status !== 'accepted') return null;
+    return this.sales().find(s => s.quoteId === quote._id && s.status === 'pending') ?? null;
+  }
+
+  payQuote(quote: ApiQuote): void {
+    const sale = this.saleForQuote(quote);
+    if (!sale) {
+      this.payError.set('La cotizaciÃ³n aceptada aÃºn no tiene una venta pendiente asociada.');
+      return;
+    }
+    this.paySale(sale);
   }
 
   private loadFavorites(): void {

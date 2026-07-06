@@ -38,7 +38,7 @@ export class QuoteService {
 
   readonly subtotal = computed(() =>
     this._items().reduce((s, i) => {
-      const unit = i.offerPriceRaw ?? i.priceRaw ?? 0;
+      const unit = this.itemUnitPrice(i);
       return s + unit * i.qty;
     }, 0),
   );
@@ -54,13 +54,28 @@ export class QuoteService {
 
   readonly total = computed(() => Math.max(0, this.subtotal() - this.discount()));
 
+  itemUnitPrice(item: Pick<ProductCardData, 'priceRaw' | 'offerPriceRaw'>): number {
+    return item.offerPriceRaw ?? item.priceRaw ?? 0;
+  }
+
   add(product: ProductCardData): void {
+    if (product.isPurchasable === false) return;
     this._items.update(items => {
       const idx = items.findIndex(i => i.id === product.id);
       if (idx >= 0) {
-        return items.map((i, n) => n === idx ? { ...i, qty: i.qty + 1 } : i);
+        return items.map((i, n) => {
+          if (n !== idx) return i;
+          const maxQty = i.maxQty ?? i.stockRaw;
+          const nextQty = i.qty + 1;
+          return { ...i, qty: maxQty != null ? Math.min(nextQty, maxQty) : nextQty };
+        });
       }
-      return [...items, { ...product, qty: 1, addedAt: new Date().toISOString() }];
+      return [...items, {
+        ...product,
+        qty: 1,
+        maxQty: product.stockRaw ?? undefined,
+        addedAt: new Date().toISOString(),
+      }];
     });
   }
 
@@ -71,7 +86,11 @@ export class QuoteService {
   updateQty(productId: string, qty: number): void {
     if (qty <= 0) { this.remove(productId); return; }
     this._items.update(items =>
-      items.map(i => i.id === productId ? { ...i, qty } : i),
+      items.map(i => {
+        if (i.id !== productId) return i;
+        const maxQty = i.maxQty ?? i.stockRaw;
+        return { ...i, qty: maxQty != null ? Math.min(qty, maxQty) : qty };
+      }),
     );
   }
 
@@ -118,9 +137,13 @@ export class QuoteService {
         productId: i.id,
         name:      i.name,
         sku:       i.sku,
-        price:     i.offerPriceRaw ?? i.priceRaw ?? 0,
+        price:     this.itemUnitPrice(i),
+        listPrice: i.priceRaw ?? this.itemUnitPrice(i),
+        offerPrice: i.offerPriceRaw ?? null,
+        offerApplied: i.offerPriceRaw != null,
+        offerDiscountPercent: i.offerDiscountPercent ?? null,
         quantity:  i.qty,
-        total:     (i.offerPriceRaw ?? i.priceRaw ?? 0) * i.qty,
+        total:     this.itemUnitPrice(i) * i.qty,
       })),
       totals: { subtotal, discount, iva: 0, total },
       extra: {

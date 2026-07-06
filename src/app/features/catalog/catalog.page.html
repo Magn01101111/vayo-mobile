@@ -117,6 +117,7 @@
             <button
               class="pcard__add"
               [class.pcard__add--in]="inCart(p.id)"
+              [disabled]="!isPurchasable(p)"
               (click)="addToQuote($event, p)"
               [attr.aria-label]="inCart(p.id) ? 'Ya en cotización' : 'Agregar a cotización'"
             >

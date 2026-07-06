@@ -206,11 +206,17 @@ export interface ApiQuote {
   items?: Array<{
     productId: string;
     name: string;
+    sku?: string;
     price: number;
+    listPrice?: number | null;
+    offerPrice?: number | null;
+    offerApplied?: boolean;
+    offerDiscountPercent?: number | null;
     quantity: number;
     total: number;
   }>;
   totals?: { subtotal?: number; discount?: number; iva?: number; total?: number };
+  manualDiscount?: { percent?: number; amount?: number; reason?: string };
   metadata?: { status?: QuoteStatus };
   viewedAt?: string | null;
   createdAt?: string;
@@ -234,10 +240,15 @@ export interface ApiSale {
     name: string;
     sku?: string;
     price: number;
+    listPrice?: number | null;
+    offerPrice?: number | null;
+    offerApplied?: boolean;
+    offerDiscountPercent?: number | null;
     quantity: number;
     total: number;
   }>;
   totals?: { subtotal?: number; discount?: number; iva?: number; total?: number };
+  manualDiscount?: { percent?: number; amount?: number; reason?: string };
   status?: SaleStatus;
   paymentMethod?: SalePaymentMethod;
   createdAt?: string;

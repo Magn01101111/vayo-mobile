@@ -96,7 +96,7 @@ export class ProductDetailPage implements OnInit {
 
   addToQuote(): void {
     const p = this.product();
-    if (!p) return;
+    if (!p || !p.isPurchasable) return;
     this.qs.add(p);
     this.added.set(true);
     setTimeout(() => this.added.set(false), 1500);
