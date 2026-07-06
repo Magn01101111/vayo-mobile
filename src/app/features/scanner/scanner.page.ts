@@ -183,9 +183,7 @@ export class ScannerPage {
           detections: result.detections,
           topPrediction: result.topPrediction,
         });
-        const above = result.detections
-          .filter(d => d.confidence >= this.ml.CONFIDENCE_THRESHOLD)
-          .slice(0, 3);
+        const above = result.detections.slice(0, 3);
 
         if (above.length === 0) {
           console.info('[Scanner] El modelo no entrego detecciones utilizables.', {

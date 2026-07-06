@@ -4,5 +4,5 @@ export const environment = {
   // Si en algun momento vuelven a levantar el backend local,
   // este valor se puede cambiar temporalmente a http://localhost:3000/api.
   apiUrl: 'https://vayo-solutions-backend.onrender.com/api',
-  mlCloudUrl: 'https://vayo-ml-pt-1045003717160.us-central1.run.app',
+  mlCloudUrl: 'https://vayo-ml-pt-gqzsxqekgq-uc.a.run.app',
 };
