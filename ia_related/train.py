@@ -36,6 +36,7 @@ def run_epoch(model, loader, criterion, device, *, use_amp, amp_dtype, optimizer
     train = optimizer is not None
     model.train() if train else model.eval()
     total_loss, correct, n = 0.0, 0, 0
+    num_batches = len(loader)
     if train:
         optimizer.zero_grad(set_to_none=True)
     grad_ctx = contextlib.nullcontext() if train else torch.no_grad()
@@ -49,15 +50,16 @@ def run_epoch(model, loader, criterion, device, *, use_amp, amp_dtype, optimizer
                 loss = criterion(out, y)
             if train:
                 bloss = loss / accum
+                should_step = ((i + 1) % accum == 0) or (i + 1 == num_batches)
                 if scaler is not None and scaler.is_enabled():
                     scaler.scale(bloss).backward()
-                    if (i + 1) % accum == 0:
+                    if should_step:
                         scaler.step(optimizer)
                         scaler.update()
                         optimizer.zero_grad(set_to_none=True)
                 else:
                     bloss.backward()
-                    if (i + 1) % accum == 0:
+                    if should_step:
                         optimizer.step()
                         optimizer.zero_grad(set_to_none=True)
             total_loss += loss.item() * x.size(0)
@@ -79,8 +81,12 @@ def main() -> None:
     amp_dtype = torch.bfloat16 if tcfg["amp_dtype"] == "bfloat16" else torch.float16
     use_scaler = use_amp and amp_dtype == torch.float16
     accum = int(tcfg.get("accumulation_steps", 1))
+    effective_batch = int(tcfg["batch_size"]) * accum
 
-    print(f"Dispositivo: {device}  |  AMP: {use_amp} ({tcfg['amp_dtype']})  |  clases: {classes}")
+    print(
+        f"Dispositivo: {device}  |  AMP: {use_amp} ({tcfg['amp_dtype']})  |  "
+        f"batch={tcfg['batch_size']} x accum={accum} => efectivo={effective_batch}  |  clases: {classes}"
+    )
 
     train_dl, val_dl, _ = build_dataloaders(cfg, classes)
     model = build_model(cfg["model"]["name"], len(classes), cfg["model"]["pretrained"]).to(device)

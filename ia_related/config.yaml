@@ -39,9 +39,9 @@ model:                        # ver doc 02
 
 # --- Entrenamiento -----------------------------------------------------------
 train:
-  batch_size: 16              # ver doc 04 (baja a 8 si hay OOM)
-  accumulation_steps: 1       # batch efectivo = batch_size * accumulation_steps
-  num_workers: 4
+  batch_size: 8               # mas seguro para RTX 2050 con 384px; en 5060 tambien corre sin problema
+  accumulation_steps: 2       # batch efectivo = 16, similar al ajuste original sin exigir tanta VRAM
+  num_workers: 0              # dataset chico + Windows: menos riesgo y casi sin costo de rendimiento
   amp: true                   # precisión mixta (doc 03)
   amp_dtype: "float16"        # "float16" o "bfloat16"
   label_smoothing: 0.1        # doc 06

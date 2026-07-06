@@ -6,6 +6,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "verify:ml": "node ./scripts/verify-ml-assets.mjs",
+    "prebuild": "npm run verify:ml",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

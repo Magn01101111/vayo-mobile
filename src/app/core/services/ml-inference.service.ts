@@ -66,6 +66,7 @@ export class MlInferenceService {
     if (!metaRes.ok) {
       throw new Error(
         '[MlInference] No se encontraron los metadatos del modelo. ' +
+        'Falta el bundle generado en ia_related/outputs (inference_meta.json/model.onnx). ' +
         'Corre export_onnx.py y reconstruye la app.'
       );
     }
