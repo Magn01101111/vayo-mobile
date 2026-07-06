@@ -26,6 +26,7 @@ export const API_CONFIG = {
     sales:          'sales',
     salesFromQuote: 'sales/from-quote',
     paymentsWebpayInit: 'payments/webpay/init',
+    paymentsWebpayConfirm: 'payments/webpay/confirm',
 
     // Coupons
     coupons:         'coupons',

@@ -11,6 +11,12 @@ export interface WebpayInitResponse {
   paymentId: string;
 }
 
+export interface WebpayConfirmResponse {
+  status: 'paid' | 'rejected';
+  folio?: string;
+  reason?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private readonly api = inject(ApiService);
@@ -19,6 +25,13 @@ export class PaymentService {
     return this.api.post<ApiResponse<WebpayInitResponse>>(
       API_CONFIG.endpoints.paymentsWebpayInit,
       { saleId },
+    );
+  }
+
+  confirmWebpay(saleId: string, token: string): Observable<ApiResponse<WebpayConfirmResponse>> {
+    return this.api.get<ApiResponse<WebpayConfirmResponse>>(
+      `${API_CONFIG.endpoints.paymentsWebpayConfirm}/${saleId}`,
+      { token_ws: token },
     );
   }
 
